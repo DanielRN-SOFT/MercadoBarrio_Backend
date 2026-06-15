@@ -4,20 +4,33 @@ import generateToken from "../helpers/generateToken.js";
 import { usuarios_estado } from "../../generated/prisma/index.js";
 export const authUser = async (req, res) => {
   const { email, password } = req.body;
-  const user = await prisma.usuarios.findUnique({ where: { email } });
+  console.log(email, password);
+  const user = await prisma.usuarios.findUnique({
+    where: { email },
+    select: {
+      id: true,
+      nombre: true,
+      email: true,
+      roles_id: true,
+      password: true,
+    },
+  });
+  try {
+    if (user && (await bcrypt.compare(password, user.password))) {
+      generateToken(res, user.id);
 
-  if (user && (await bcrypt.compare(password, user.password))) {
-    generateToken(res, user.id);
-
-    res.json({
-      id: user.id,
-      nombre: user.nombre,
-      email: user.email,
-      roles_id: user.roles_id,
-    });
-  } else {
-    res.status(401);
-    throw new Error("Email o Password invalido");
+      res.json({
+        id: user.id,
+        nombre: user.nombre,
+        email: user.email,
+        roles_id: user.roles_id,
+      });
+    } else {
+      res.status(401);
+      throw new Error("Email o Password invalido");
+    }
+  } catch (error) {
+    console.log(error);
   }
 };
 export const registerUser = async (req, res) => {
@@ -51,7 +64,7 @@ export const registerUser = async (req, res) => {
     res.status(201).json({
       id: user.id,
       nombre: user.nombre,
-      email: user.email, 
+      email: user.email,
       rol: user.roles_id,
     });
   } else {
