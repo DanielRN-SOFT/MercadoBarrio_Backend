@@ -6,6 +6,7 @@ dotenv.config();
 import authRouter from "./src/Modules/Auth/auth.routes.js";
 import userRouter from "./src/Modules/Usuarios/usuarios.routes.js";
 import errorHandler from "./src/middlewares/ErrorMiddleware.js";
+import roleRouter from "./src/Modules/Roles/roles.routes.js";
 
 // Config
 const port = process.env.PORT || 5000;
@@ -20,6 +21,7 @@ app.use(cookieParser());
 // Rutas
 app.use("/api/auth", authRouter);
 app.use("/api/users", userRouter);
+app.use("/api/roles", roleRouter);
 app.use(errorHandler);
 
 // Servidor
