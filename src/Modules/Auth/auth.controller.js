@@ -1,7 +1,7 @@
-import prisma from "../../prismaClient.js";
+import prisma from "../../../prismaClient.js";
 import bcrypt from "bcryptjs";
-import generateToken from "../helpers/generateToken.js";
-import { usuarios_estado } from "../../generated/prisma/index.js";
+import generateToken from "../../helpers/generateToken.js";
+import { usuarios_estado } from "../../../generated/prisma/index.js";
 export const authUser = async (req, res) => {
   const { email, password } = req.body;
   console.log(email, password);
@@ -15,22 +15,18 @@ export const authUser = async (req, res) => {
       password: true,
     },
   });
-  try {
-    if (user && (await bcrypt.compare(password, user.password))) {
-      generateToken(res, user.id);
+  if (user && (await bcrypt.compare(password, user.password))) {
+    generateToken(res, user.id);
 
-      res.json({
-        id: user.id,
-        nombre: user.nombre,
-        email: user.email,
-        roles_id: user.roles_id,
-      });
-    } else {
-      res.status(401);
-      throw new Error("Email o Password invalido");
-    }
-  } catch (error) {
-    console.log(error);
+    res.json({
+      id: user.id,
+      nombre: user.nombre,
+      email: user.email,
+      roles_id: user.roles_id,
+    });
+  } else {
+    res.status(401);
+    throw new Error("Email o Password invalido");
   }
 };
 export const registerUser = async (req, res) => {
