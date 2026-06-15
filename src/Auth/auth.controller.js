@@ -1,8 +1,7 @@
-import prisma from "../../prismaClient";
+import prisma from "../../prismaClient.js";
 import bcrypt from "bcryptjs";
-import generateToken from "../helpers/generateToken";
-import { usuarios_estado } from "../../generated/prisma/enums";
-import { use } from "react";
+import generateToken from "../helpers/generateToken.js";
+import { usuarios_estado } from "../../generated/prisma/index.js";
 export const authUser = async (req, res) => {
   const { email, password } = req.body;
   const user = await prisma.usuarios.findUnique({ where: { email } });
@@ -21,23 +20,30 @@ export const authUser = async (req, res) => {
     throw new Error("Email o Password invalido");
   }
 };
-
 export const registerUser = async (req, res) => {
   const { nombre, email, password, telefono } = req.body;
-  const usuario = await prisma.usuarios.findUnique({ where: { email } });
-  const rol = await prisma.roles.findFirst({ where: { nombre: "Tendero" } });
 
+  const usuario = await prisma.usuarios.findUnique({ where: { email } });
   if (usuario) {
     res.status(400);
     throw new Error("El usuario ya existe");
   }
 
+  const rol = await prisma.roles.findFirst({ where: { nombre: "Tendero" } });
+  if (!rol) {
+    res.status(500);
+    throw new Error("Rol 'Tendero' no encontrado");
+  }
+
   const user = await prisma.usuarios.create({
-    nombre,
-    email,
-    password: bcrypt.hashSync(password, 10),
-    estado: usuarios_estado.Activo,
-    rol,
+    data: {
+      nombre,
+      email,
+      password: bcrypt.hashSync(password, 10),
+      telefono,
+      estado: "Activo",
+      roles_id: rol.id,
+    },
   });
 
   if (user) {
@@ -45,7 +51,7 @@ export const registerUser = async (req, res) => {
     res.status(201).json({
       id: user.id,
       nombre: user.nombre,
-      email: user.nombre,
+      email: user.email, 
       rol: user.roles_id,
     });
   } else {
@@ -72,6 +78,22 @@ export const getUserProfile = (req, res) => {
       email: user.email,
       roles_id: user.roles_id,
     });
+  } else {
+    res.status(404);
+    throw new Error("Usuario no encontrado");
+  }
+};
+
+export const updateUserProfile = async (req, res) => {
+  const user = await prisma.usuarios.findUnique(req.user.id);
+  if (user) {
+    const updatedUser = await prisma.usuarios.update({
+      nombre: req.body.name || user.nombre,
+      email: req.body.email || user.email,
+      telefono: req.body.telefono || user.telefono,
+    });
+
+    res.json(updatedUser);
   } else {
     res.status(404);
     throw new Error("Usuario no encontrado");

@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import prisma from "../../prismaClient";
+import prisma from "../../prismaClient.js";
 
 export const protect = async (req, res, next) => {
   let token;
@@ -29,24 +29,28 @@ export const protect = async (req, res, next) => {
   }
 };
 
-export const tendero = (req, res, next) => {
-    const rol_tendero = await prisma.roles.findFirst({where: {
-        nombre: "Tendero"
-    }});
+export const EsTendero = async (req, res, next) => {
+  const rol_tendero = await prisma.roles.findFirst({
+    where: {
+      nombre: "Tendero",
+    },
+  });
 
-    if(req.user && req.user.roles_id == rol_tendero.id){
-        res.status(401);
-        throw new Error("No autorizado, debe ser Tendero")
-    }
-}
+  if (req.user && req.user.roles_id == rol_tendero.id) {
+    res.status(401);
+    throw new Error("No autorizado, debe ser Tendero");
+  }
+};
 
-export const admin = (req, res, next) => {
-    const rol_tendero = await prisma.roles.findFirst({where: {
-        nombre: "Admin"
-    }});
+export const EsAdmin = async (req, res, next) => {
+  const rol_tendero = await prisma.roles.findFirst({
+    where: {
+      nombre: "Admin",
+    },
+  });
 
-    if(req.user && req.user.roles_id == rol_tendero.id){
-        res.status(401);
-        throw new Error("No autorizado, debe ser ADMIN")
-    }
-}
+  if (req.user && req.user.roles_id == rol_tendero.id) {
+    res.status(401);
+    throw new Error("No autorizado, debe ser ADMIN");
+  }
+};

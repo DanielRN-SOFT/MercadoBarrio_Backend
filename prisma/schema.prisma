@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../generated/prisma"
 }
 
@@ -119,7 +119,7 @@ model productos {
 }
 
 model proveedores {
-  id          Int                @id
+  id          Int                @id @default(autoincrement())
   nombre      String             @db.VarChar(45)
   telefono    String             @db.VarChar(45)
   estado      proveedores_estado
@@ -127,13 +127,13 @@ model proveedores {
 }
 
 model roles {
-  id       Int        @id
+  id       Int        @id @default(autoincrement())
   nombre   String     @db.VarChar(100)
   usuarios usuarios[]
 }
 
 model tiendas {
-  id                  Int                 @id
+  id                  Int                 @id @default(autoincrement())
   nombre              String              @db.VarChar(45)
   direccion           String              @db.VarChar(100)
   longitud            Decimal             @db.Decimal(10, 8)
@@ -166,7 +166,7 @@ model unidad_medida {
 model usuarios {
   id          Int             @id @default(autoincrement())
   nombre      String          @db.VarChar(45)
-  email       String          @db.VarChar(150)
+  email       String          @unique @db.VarChar(150)
   password    String          @db.VarChar(250)
   telefono    String          @db.VarChar(45)
   estado      usuarios_estado
