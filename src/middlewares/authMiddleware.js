@@ -13,9 +13,9 @@ export const protect = async (req, res, next) => {
       req.user = await prisma.user.findUnique({
         where: { id: decoded.userId },
         select: {
-          nombre: true,
+          name: true,
           email: true,
-          roles_id: true,
+          roleId: true,
         },
       });
     } catch (error) {
@@ -29,7 +29,7 @@ export const protect = async (req, res, next) => {
   }
 };
 
-export const EsTendero = async (req, res, next) => {
+export const IsTendero = async (req, res, next) => {
   const rol_tendero = await prisma.role.findFirst({
     where: {
       nombre: "Grocer",
@@ -42,7 +42,7 @@ export const EsTendero = async (req, res, next) => {
   }
 };
 
-export const EsAdmin = async (req, res, next) => {
+export const IsAdmin = async (req, res, next) => {
   const rol_tendero = await prisma.role.findFirst({
     where: {
       nombre: "Admin",
