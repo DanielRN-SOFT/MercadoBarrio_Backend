@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 dotenv.config();
 import authRouter from "./src/Modules/Auth/auth.routes.js";
+import userRouter from "./src/Modules/Usuarios/usuarios.routes.js";
 import errorHandler from "./src/middlewares/ErrorMiddleware.js";
 
 // Config
@@ -18,6 +19,7 @@ app.use(cookieParser());
 
 // Rutas
 app.use("/api/auth", authRouter);
+app.use("/api/users", userRouter);
 app.use(errorHandler);
 
 // Servidor

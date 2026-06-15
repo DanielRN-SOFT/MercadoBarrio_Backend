@@ -32,7 +32,7 @@ export const protect = async (req, res, next) => {
 export const EsTendero = async (req, res, next) => {
   const rol_tendero = await prisma.role.findFirst({
     where: {
-      nombre: "Tendero",
+      nombre: "Grocer",
     },
   });
 

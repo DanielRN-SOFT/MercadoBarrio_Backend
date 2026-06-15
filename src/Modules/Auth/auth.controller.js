@@ -38,7 +38,7 @@ export const registerUser = async (req, res) => {
     throw new Error("El usuario ya existe");
   }
 
-  const rol = await prisma.role.findFirst({ where: { name: "Tendero" } });
+  const rol = await prisma.role.findFirst({ where: { name: "Grocer" } });
   if (!rol) {
     res.status(500);
     throw new Error("Rol 'Tendero' no encontrado");
@@ -50,7 +50,7 @@ export const registerUser = async (req, res) => {
       email,
       password: bcrypt.hashSync(password, 10),
       phone,
-      status: "Activo",
+      status: UserStatus.Active,
       roleId: rol.id,
     },
   });
@@ -59,9 +59,9 @@ export const registerUser = async (req, res) => {
     generateToken(res, user.id);
     res.status(201).json({
       id: user.id,
-      nombre: user.nombre,
+      name: user.name,
       email: user.email,
-      rol: user.roles_id,
+      roleId: user.roleId,
     });
   } else {
     res.status(400);
