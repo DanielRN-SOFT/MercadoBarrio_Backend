@@ -13,7 +13,7 @@ const router = express();
 router.get("/", getProductCategories);
 router.get("/:id", getProductCategoryById);
 router.post("/", createCategory);
-router.put("/", updateProductCategory);
+router.put("/:id", updateProductCategory);
 router.put("/delete/:id", deleteProductCategory);
 router.put("/restore/:id", restoreProductCategory);
 

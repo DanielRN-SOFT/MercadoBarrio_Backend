@@ -4,7 +4,7 @@ import prisma from "../../../prismaClient.js";
 export const getUsers = async (req, res) => {
   // Obtenemos la pagina desde el query param, por defecto pagina 1
   const page = req.query.page || 1;
-  const limit = process.env.PAGINATION_LIMIT ||  10;
+  const limit = parseInt(process.env.PAGINATION_LIMIT) || 10;
 
   // Si estamos en página 1: skip=0, página 2: skip=10, página 3: skip=20...
   const skip = (page - 1) * limit;

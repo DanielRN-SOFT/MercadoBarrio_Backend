@@ -5,7 +5,8 @@ export const getProductCategories = async (req, res) => {
   try {
     // Obtenemos la pagina desde el query param, por defecto pagina 1
     const page = req.query.page || 1;
-    const limit = process.env.PAGINATION_LIMIT || 10;
+    const limit = parseInt(process.env.PAGINATION_LIMIT) || 10;
+    console.log(typeof limit);
 
     // Si estamos en página 1: skip=0, página 2: skip=10, página 3: skip=20...
     const skip = (page - 1) * limit;
@@ -33,7 +34,7 @@ export const getProductCategories = async (req, res) => {
     });
   } catch (error) {
     res.status(500);
-    throw new Error("Ocurrio un error en el servidor");
+    throw new Error("Ocurrio un error en el servidor: " + error.message);
   }
 };
 
@@ -50,7 +51,7 @@ export const getProductCategoryById = async (req, res) => {
     });
 
     if (productCategory) {
-      res.json({ productCategory });
+      res.json({productCategory});
     } else {
       res.status(500);
       throw new Error("Categoria de producto no encontrada");
@@ -91,7 +92,7 @@ export const updateProductCategory = async (req, res) => {
       throw new Error("Categoria de producto no encontrada");
     }
 
-    const updatedCategory = await prisma.role.update({
+    const updatedCategory = await prisma.productCategory.update({
       data: { name },
       where: { id },
     });
@@ -123,7 +124,7 @@ export const deleteProductCategory = async (req, res) => {
       const deletedProductCategory = await prisma.productCategory.update({
         where: { id },
         data: {
-          status: ProductCategoryStatus.Active,
+          status: ProductCategoryStatus.Inactive,
         },
       });
 
