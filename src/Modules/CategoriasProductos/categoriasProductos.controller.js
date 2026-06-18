@@ -6,7 +6,7 @@ export const getProductCategories = async (req, res) => {
     // Obtenemos la pagina desde el query param, por defecto pagina 1
     const page = req.query.page || 1;
     const limit = parseInt(process.env.PAGINATION_LIMIT) || 10;
-  
+
     // Si estamos en página 1: skip=0, página 2: skip=10, página 3: skip=20...
     const skip = (page - 1) * limit;
 
@@ -50,7 +50,7 @@ export const getProductCategoryById = async (req, res) => {
     });
 
     if (productCategory) {
-      res.json({productCategory});
+      res.json({ productCategory });
     } else {
       res.status(500);
       throw new Error("Categoria de producto no encontrada");
@@ -70,7 +70,11 @@ export const createCategory = async (req, res) => {
         status: ProductCategoryStatus.Active,
       },
     });
-    res.json(createdCategory);
+    res.status(201).json({
+      data: createdCategory,
+      status: 201,
+      message: "Categoria de producto creada correctamente",
+    });
   } catch (error) {
     res.status(500);
     throw new Error(error.message);
@@ -96,7 +100,11 @@ export const updateProductCategory = async (req, res) => {
       where: { id },
     });
 
-    res.status(200).json(updatedCategory);
+    res.status(200).json({
+      data: updatedCategory,
+      status: 200,
+      message: "Categoria de producto editada correctamente",
+    });
   } catch (error) {
     res.status(500);
     throw new Error(error.message);
@@ -127,7 +135,11 @@ export const deleteProductCategory = async (req, res) => {
         },
       });
 
-      res.status(200).json({ deletedProductCategory });
+      res.status(200).json({
+        data: deletedProductCategory,
+        status: 200,
+        message: "Categoria de producto eliminada correctamente",
+      });
     } else {
       res.status(404);
       throw new Error("Categoria de producto no encontrada");
@@ -152,7 +164,13 @@ export const restoreProductCategory = async (req, res) => {
       },
     });
 
-    res.status(200).json({ restoredProductCategory });
+    res
+      .status(200)
+      .json({
+        data: restoredProductCategory,
+        status: 200,
+        message: "Categoria de producto restablecida correctamente",
+      });
   } else {
     res.status(404);
     throw new Error("Categoria de producto no encontrada");
