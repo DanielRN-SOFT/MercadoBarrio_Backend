@@ -1,27 +1,26 @@
 import { ProductCategoryStatus } from "../../../generated/prisma/index.js";
 import prisma from "../../../prismaClient.js";
+import verifyFields from "../../helpers/verifyStringFields.js";
+import verifyNumberID from "../../helpers/verifyNumberID.js";
 
-export const getProductCategories = async (req, res) => {
+export const getProductCategories = async (req, res, next) => {
   try {
-    // Obtenemos la pagina desde el query param, por defecto pagina 1
     const page = req.query.page || 1;
     const limit = parseInt(process.env.PAGINATION_LIMIT) || 10;
-
-    // Si estamos en página 1: skip=0, página 2: skip=10, página 3: skip=20...
     const skip = (page - 1) * limit;
 
-    // Total de registros (para saber cuántas páginas hay en total)
-    const total = await prisma.productCategory.count();
-
-    const productCategories = await prisma.productCategory.findMany({
-      skip,
-      take: limit,
-      select: {
-        id: true,
-        name: true,
-        status: true,
-      },
-    });
+    const [total, productCategories] = await Promise.all([
+      prisma.productCategory.count(),
+      prisma.productCategory.findMany({
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          name: true,
+          status: true,
+        },
+      }),
+    ]);
 
     res.json({
       data: productCategories,
@@ -32,14 +31,15 @@ export const getProductCategories = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500);
-    throw new Error("Ocurrio un error en el servidor");
+    next(error);
   }
 };
 
-export const getProductCategoryById = async (req, res) => {
+export const getProductCategoryById = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id);
+    verifyNumberID(id);
+
     const productCategory = await prisma.productCategory.findUnique({
       where: { id },
       select: {
@@ -50,48 +50,56 @@ export const getProductCategoryById = async (req, res) => {
     });
 
     if (productCategory) {
-      res.json({ productCategory });
+      res.json({ data: productCategory });
     } else {
-      res.status(500);
+      res.status(404);
       throw new Error("Categoria de producto no encontrada");
     }
   } catch (error) {
-    res.status(404);
-    throw new Error(error.message);
+    next(error);
   }
 };
 
-export const createCategory = async (req, res) => {
+export const createCategory = async (req, res, next) => {
   try {
     const { name } = req.body;
+    verifyFields({ name });
+
     const createdCategory = await prisma.productCategory.create({
       data: {
         name,
         status: ProductCategoryStatus.Active,
       },
     });
+
     res.status(201).json({
       data: createdCategory,
       message: "Categoria de producto creada correctamente",
     });
   } catch (error) {
-    res.status(500);
-    throw new Error(error.message);
+    if (error.code === "P2002") {
+      error.statusCode = 409;
+      error.message = "Ese nombre ya está registrado en el sistema";
+    }
+    next(error);
   }
 };
 
-export const updateProductCategory = async (req, res) => {
+export const updateProductCategory = async (req, res, next) => {
   try {
     const { name } = req.body;
     const id = parseInt(req.params.id);
 
+    verifyNumberID(id);
+    verifyFields({ name });
+
     const productCategory = await prisma.productCategory.findUnique({
       where: { id },
     });
-
     if (!productCategory) {
-      res.status(404);
-      throw new Error("Categoria de producto no encontrada");
+      const error = new Error("Categoria de producto no encontrada");
+      error.statusCode = 404;
+      throw error;
     }
 
     const updatedCategory = await prisma.productCategory.update({
@@ -104,69 +112,75 @@ export const updateProductCategory = async (req, res) => {
       message: "Categoria de producto editada correctamente",
     });
   } catch (error) {
-    res.status(500);
-    throw new Error(error.message);
+    if (error.code === "P2002") {
+      error.statusCode = 409;
+      error.message = "Ese nombre ya está registrado en el sistema";
+    }
+    next(error);
   }
 };
 
-export const deleteProductCategory = async (req, res) => {
+export const deleteProductCategory = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id);
+    verifyNumberID(id);
+
     const productCategory = await prisma.productCategory.findUnique({
       where: { id },
     });
-
-    if (productCategory) {
-      const isExistProductCategory = await prisma.product.findFirst({
-        where: { productCategoryId: id },
-      });
-
-      if (isExistProductCategory) {
-        res.status(400);
-        throw new Error("Esa categoria esta asociada a un producto");
-      }
-
-      const deletedProductCategory = await prisma.productCategory.update({
-        where: { id },
-        data: {
-          status: ProductCategoryStatus.Inactive,
-        },
-      });
-
-      res.status(200).json({
-        data: deletedProductCategory,
-        message: "Categoria de producto eliminada correctamente",
-      });
-    } else {
-      res.status(404);
-      throw new Error("Categoria de producto no encontrada");
+    if (!productCategory) {
+      const error = new Error("Categoria de producto no encontrada");
+      error.statusCode = 404;
+      throw error;
     }
+
+    const isAssociated = await prisma.product.findFirst({
+      where: { productCategoryId: id },
+    });
+    if (isAssociated) {
+      const error = new Error("Esa categoria está asociada a un producto");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const deletedProductCategory = await prisma.productCategory.update({
+      where: { id },
+      data: { status: ProductCategoryStatus.Inactive },
+    });
+
+    res.json({
+      data: deletedProductCategory,
+      message: "Categoria de producto eliminada correctamente",
+    });
   } catch (error) {
-    res.status(500);
-    throw new Error(error.message);
+    next(error);
   }
 };
 
-export const restoreProductCategory = async (req, res) => {
-  const id = parseInt(req.params.id);
-  const productCategory = await prisma.productCategory.findUnique({
-    where: { id },
-  });
+export const restoreProductCategory = async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id);
+    verifyNumberID(id);
 
-  if (productCategory) {
+    const productCategory = await prisma.productCategory.findUnique({
+      where: { id },
+    });
+    if (!productCategory) {
+      const error = new Error("Categoria de producto no encontrada");
+      error.statusCode = 404;
+      throw error;
+    }
+
     const restoredProductCategory = await prisma.productCategory.update({
       where: { id },
-      data: {
-        status: ProductCategoryStatus.Active,
-      },
+      data: { status: ProductCategoryStatus.Active },
     });
 
-    res.status(200).json({
+    res.json({
       data: restoredProductCategory,
       message: "Categoria de producto restablecida correctamente",
     });
-  } else {
-    res.status(404);
-    throw new Error("Categoria de producto no encontrada");
+  } catch (error) {
+    next(error);
   }
 };
