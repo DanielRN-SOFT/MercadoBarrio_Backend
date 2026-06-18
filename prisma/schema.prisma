@@ -8,212 +8,214 @@ datasource db {
 }
 
 model ProductCategory {
-  id       Int                     @id @default(autoincrement())
-  name     String                  @db.VarChar(100)
+  id       Int                   @id @default(autoincrement())
+  name     String                @unique @db.VarChar(100)
   status   ProductCategoryStatus
   products Product[]
 
-  @@map("categoria_producto")
+  @@map("product_categories")
 }
 
 model StoreCategory {
-  id     Int                  @id @default(autoincrement())
-  name   String               @db.VarChar(45)
+  id     Int                 @id @default(autoincrement())
+  name   String              @unique @db.VarChar(45)
   status StoreCategoryStatus
   stores Store[]
 
-  @@map("categoria_tienda")
+  @@map("store_categories")
 }
 
 model MovementDetail {
-  id           Int      @id @default(autoincrement())
-  productId    Int      @map("productos_id")
-  movementId   Int      @map("movimientos_id")
-  quantity     Int      @map("cantidad")
-  unitCost     Decimal  @db.Decimal(10, 2) @map("costo_unitario")
-  movement     Movement @relation(fields: [movementId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_detalle_entrada_entradas1")
-  product      Product  @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_detalle_entrada_productos1")
+  id         Int      @id @default(autoincrement())
+  productId  Int
+  movementId Int
+  quantity   Int
+  unitCost   Decimal  @db.Decimal(10, 2)
+  movement   Movement @relation(fields: [movementId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  product    Product  @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  @@index([movementId], map: "fk_detalle_entrada_entradas1_idx")
-  @@index([productId], map: "fk_detalle_entrada_productos1_idx")
-  @@map("detalle_movimiento")
+  @@index([movementId])
+  @@index([productId])
+  @@map("movement_details")
 }
 
 model SaleDetail {
   id        Int     @id @default(autoincrement())
-  saleId    Int     @map("ventas_id")
-  productId Int     @map("productos_id")
-  quantity  Decimal @db.Decimal(10, 4) @map("cantidad")
-  unitPrice Decimal @db.Decimal(10, 4) @map("precio_unit")
+  saleId    Int
+  productId Int
+  quantity  Decimal @db.Decimal(10, 4)
+  unitPrice Decimal @db.Decimal(10, 4)
   subtotal  Decimal @db.Decimal(10, 2)
-  product   Product @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_detalle_venta_productos1")
-  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_detalle_venta_ventas1")
+  product   Product @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  @@index([productId], map: "fk_detalle_venta_productos1_idx")
-  @@index([saleId], map: "fk_detalle_venta_ventas1_idx")
-  @@map("detalle_venta")
+  @@index([productId])
+  @@index([saleId])
+  @@map("sale_details")
 }
 
 model AttendanceSchedule {
-  id        Int              @id @default(autoincrement())
-  weekDay   WeekDay          @map("dia_semana")
-  startTime DateTime         @db.Time(0) @map("hora_inicio")
-  endTime   DateTime         @db.Time(0) @map("hora_fin")
-  status    ScheduleStatus   @map("estado")
-  storeId   Int              @map("tiendas_id")
-  store     Store            @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_horarios_atencion_tiendas1")
+  id        Int            @id @default(autoincrement())
+  weekDay   WeekDay
+  startTime DateTime       @db.Time(0)
+  endTime   DateTime       @db.Time(0)
+  status    ScheduleStatus
+  storeId   Int
+  store     Store          @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  @@index([storeId], map: "fk_horarios_atencion_tiendas1_idx")
-  @@map("horarios_atencion")
+  @@index([storeId])
+  @@map("attendance_schedules")
 }
 
 model AuditLog {
   id              Int      @id @default(autoincrement())
-  timestampUtc    DateTime @default(now()) @db.Timestamp(0) @map("timestamp_utc")
-  eventActionType String   @db.VarChar(45) @map("tipo_evento_accion")
-  userId          Int      @map("usuarios_id")
-  clientIp        String   @db.VarChar(45) @map("ip_cliente")
-  resourceType    String   @db.VarChar(45) @map("recurso_tipo")
-  resourceId      Int      @map("recurso_id")
-  previousValue   String?  @db.LongText @map("valor_anterior")
-  newValue        String?  @db.LongText @map("valor_nuevo")
-  description     String   @db.VarChar(45) @map("descripcion")
+  timestampUtc    DateTime @default(now()) @db.Timestamp(0)
+  eventActionType String   @db.VarChar(45)
+  userId          Int
+  clientIp        String   @db.VarChar(45)
+  resourceType    String   @db.VarChar(45)
+  resourceId      Int
+  previousValue   String?  @db.LongText
+  newValue        String?  @db.LongText
+  description     String   @db.VarChar(45)
+  status          AuditLogStatus
 
-  @@map("log_auditoria")
+  @@map("audit_logs")
 }
 
 model Movement {
   id               Int              @id @default(autoincrement())
-  date             DateTime         @db.DateTime(0) @map("fecha")
-  status           MovementStatus   @map("estado")
-  type             MovementType     @map("tipo")
-  reason           String?          @db.Text @map("motivo")
-  supplierId       Int?             @map("proveedores_id")
-  userId           Int              @map("usuarios_id")
-  storeId          Int              @map("tiendas_id")
-  cancellationDate DateTime?        @db.DateTime(0) @map("fecha_cancelacion")
+  date             DateTime         @db.DateTime(0)
+  status           MovementStatus
+  type             MovementType
+  reason           String?          @db.Text
+  supplierId       Int?
+  userId           Int
+  storeId          Int
+  cancellationDate DateTime?        @db.DateTime(0)
   details          MovementDetail[]
-  supplier         Supplier?        @relation(fields: [supplierId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_entradas_proveedores1")
-  store            Store            @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_movimientos_tiendas1")
-  user             User             @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_movimientos_usuarios1")
+  supplier         Supplier?        @relation(fields: [supplierId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  store            Store            @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user             User             @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  @@index([supplierId], map: "fk_entradas_proveedores1_idx")
-  @@index([storeId], map: "fk_movimientos_tiendas1_idx")
-  @@index([userId], map: "fk_movimientos_usuarios1_idx")
-  @@map("movimientos")
+  @@index([supplierId])
+  @@index([storeId])
+  @@index([userId])
+  @@map("movements")
 }
 
 model Product {
-  id                  Int              @id @default(autoincrement())
-  name                String           @db.VarChar(100) @map("nombre")
-  price               Decimal          @db.Decimal(10, 2) @map("precio")
-  description         String?          @db.Text @map("descripcion")
-  referenceCode       String?          @db.VarChar(45) @map("codigo_referencia")
-  lowStockThreshold   Int              @default(5) @map("stock_bajo_apartir_de")
-  photo               String?          @db.VarChar(255) @map("foto")
-  currentStock        Int              @map("stock_actual")
-  status              ProductStatus    @map("estado")
-  productCategoryId   Int              @map("categoria_producto_id")
-  unitOfMeasureId     Int              @map("unidad_medida_id")
-  storeId             Int              @map("tiendas_id")
-  deactivationDate    DateTime?        @db.DateTime(0) @map("fecha_desactivacion")
-  movementDetails     MovementDetail[]
-  saleDetails         SaleDetail[]
-  productCategory     ProductCategory  @relation(fields: [productCategoryId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_productos_categoria_producto1")
-  store               Store            @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_productos_tiendas1")
-  unitOfMeasure       UnitOfMeasure    @relation(fields: [unitOfMeasureId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_productos_unidad_medida1")
+  id                Int              @id @default(autoincrement())
+  name              String           @db.VarChar(100)
+  price             Decimal          @db.Decimal(10, 2)
+  description       String?          @db.Text
+  referenceCode     String?          @db.VarChar(45)
+  lowStockThreshold Int              @default(5)
+  photo             String?          @db.VarChar(255)
+  currentStock      Int
+  status            ProductStatus
+  productCategoryId Int
+  unitOfMeasureId   Int
+  storeId           Int
+  deactivationDate  DateTime?        @db.DateTime(0)
+  movementDetails   MovementDetail[]
+  saleDetails       SaleDetail[]
+  productCategory   ProductCategory  @relation(fields: [productCategoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  store             Store            @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  unitOfMeasure     UnitOfMeasure    @relation(fields: [unitOfMeasureId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  @@index([productCategoryId], map: "fk_productos_categoria_producto1_idx")
-  @@index([storeId], map: "fk_productos_tiendas1_idx")
-  @@index([unitOfMeasureId], map: "fk_productos_unidad_medida1_idx")
-  @@map("productos")
+  @@index([productCategoryId])
+  @@index([storeId])
+  @@index([unitOfMeasureId])
+  @@map("products")
 }
 
 model Supplier {
-  id        Int              @id @default(autoincrement())
-  name      String           @db.VarChar(45) @map("nombre")
-  phone     String           @db.VarChar(45) @map("telefono")
-  status    SupplierStatus   @map("estado")
+  id        Int            @id @default(autoincrement())
+  name      String         @db.VarChar(45)
+  phone     String         @db.VarChar(45)
+  status    SupplierStatus
   movements Movement[]
 
-  @@map("proveedores")
+  @@map("suppliers")
 }
 
 model Role {
-  id    Int    @id @default(autoincrement())
-  name  String @db.VarChar(100) @map("nombre")
+  id    Int        @id @default(autoincrement())
+  name  String     @unique @db.VarChar(100)
+  status RoleStatus
   users User[]
 
   @@map("roles")
 }
 
 model Store {
-  id                Int                  @id @default(autoincrement())
-  name              String               @db.VarChar(45) @map("nombre")
-  address           String               @db.VarChar(100) @map("direccion")
-  longitude         Decimal              @db.Decimal(10, 8) @map("longitud")
-  latitude          Decimal              @db.Decimal(10, 8) @map("latitud")
-  description       String?              @db.Text @map("descripcion")
-  logo              String?              @db.VarChar(200) @map("logo")
-  phone             String?              @db.VarChar(45) @map("telefono")
-  status            StoreStatus          @map("estado")
-  userId            Int                  @map("usuarios_id")
-  storeCategoryId   Int                  @map("categoria_tienda_id")
-  onboardingStep    String               @db.VarChar(45) @map("on_boarding_paso")
-  schedules         AttendanceSchedule[]
-  movements         Movement[]
-  products          Product[]
-  storeCategory     StoreCategory        @relation(fields: [storeCategoryId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_tiendas_categoria_tienda1")
-  user              User                 @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_tiendas_usuarios1")
-  sales             Sale[]
+  id              Int                  @id @default(autoincrement())
+  name            String               @db.VarChar(45)
+  address         String               @db.VarChar(100)
+  longitude       Decimal              @db.Decimal(10, 8)
+  latitude        Decimal              @db.Decimal(10, 8)
+  description     String?              @db.Text
+  logo            String?              @db.VarChar(200)
+  phone           String?              @db.VarChar(45)
+  status          StoreStatus
+  userId          Int
+  storeCategoryId Int
+  onboardingStep  String               @db.VarChar(45)
+  schedules       AttendanceSchedule[]
+  movements       Movement[]
+  products        Product[]
+  storeCategory   StoreCategory        @relation(fields: [storeCategoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user            User                 @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sales           Sale[]
 
-  @@index([storeCategoryId], map: "fk_tiendas_categoria_tienda1_idx")
-  @@index([userId], map: "fk_tiendas_usuarios1_idx")
-  @@map("tiendas")
+  @@index([storeCategoryId])
+  @@index([userId])
+  @@map("stores")
 }
 
 model UnitOfMeasure {
-  id       Int                @id @default(autoincrement())
-  name     String             @db.VarChar(45) @map("nombre")
-  status   UnitOfMeasureStatus? @map("estado")
+  id       Int               @id @default(autoincrement())
+  name     String            @unique @db.VarChar(45)
+  status   UnitOfMeasureStatus
   products Product[]
 
-  @@map("unidad_medida")
+  @@map("units_of_measure")
 }
 
 model User {
-  id          Int           @id @default(autoincrement())
-  name        String        @db.VarChar(45) @map("nombre")
-  email       String        @unique @db.VarChar(150)
-  password    String        @db.VarChar(250)
-  phone       String        @db.VarChar(45) @map("telefono")
-  status      UserStatus    @map("estado")
-  roleId      Int           @map("roles_id")
-  movements   Movement[]
-  stores      Store[]
-  role        Role          @relation(fields: [roleId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuarios_roles")
-  sales       Sale[]
+  id        Int        @id @default(autoincrement())
+  name      String     @db.VarChar(45)
+  email     String     @unique @db.VarChar(150)
+  password  String     @db.VarChar(250)
+  phone     String     @db.VarChar(45)
+  status    UserStatus
+  roleId    Int
+  movements Movement[]
+  stores    Store[]
+  role      Role       @relation(fields: [roleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sales     Sale[]
 
-  @@index([roleId], map: "fk_usuarios_roles_idx")
-  @@map("usuarios")
+  @@index([roleId])
+  @@map("users")
 }
 
 model Sale {
-  id                 Int          @id @default(autoincrement())
-  date               DateTime     @db.DateTime(0) @map("fecha")
-  total              Decimal      @db.Decimal(10, 2)
-  status             SaleStatus   @map("estado")
-  userId             Int          @map("usuarios_id")
-  storeId            Int          @map("tiendas_id")
-  cancellationReason String?      @db.Text @map("motivo_cancelacion")
-  cancellationDate   DateTime?    @db.DateTime(0) @map("fecha_cancelacion")
+  id                 Int        @id @default(autoincrement())
+  date               DateTime   @db.DateTime(0)
+  total              Decimal    @db.Decimal(10, 2)
+  status             SaleStatus
+  userId             Int
+  storeId            Int
+  cancellationReason String?    @db.Text
+  cancellationDate   DateTime?  @db.DateTime(0)
   details            SaleDetail[]
-  store              Store        @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ventas_tiendas1")
-  user               User         @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ventas_usuarios1")
+  store              Store      @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user               User       @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  @@index([storeId], map: "fk_ventas_tiendas1_idx")
-  @@index([userId], map: "fk_ventas_usuarios1_idx")
-  @@map("ventas")
+  @@index([storeId])
+  @@index([userId])
+  @@map("sales")
 }
 
 // ─── Enums ───────────────────────────────────────────────────────────────────
@@ -227,87 +229,101 @@ enum WeekDay {
   Saturday  @map("Sábado")
   Sunday    @map("Domingo")
 
-  @@map("horarios_atencion_dia_semana")
+  @@map("week_day")
 }
 
 enum ProductCategoryStatus {
   Active   @map("Activo")
   Inactive @map("Inactivo")
 
-  @@map("categoria_producto_estado")
+  @@map("product_category_status")
 }
 
 enum StoreCategoryStatus {
   Active   @map("Activo")
   Inactive @map("Inactivo")
 
-  @@map("categoria_tienda_estado")
+  @@map("store_category_status")
 }
 
 enum MovementStatus {
   Active    @map("Activo")
   Cancelled @map("Cancelada")
 
-  @@map("movimientos_estado")
-}
-
-enum UnitOfMeasureStatus {
-  Active   @map("Activo")
-  Inactive @map("Inactivo")
-
-  @@map("unidad_medida_estado")
+  @@map("movement_status")
 }
 
 enum MovementType {
-  Entry        @map("Entrada")
-  Exit         @map("Salida")
-  AdjustEntry  @map("Ajuste-Entrada")
-  AdjustExit   @map("Ajuste-Salida")
+  Entry       @map("Entrada")
+  Exit        @map("Salida")
+  AdjustEntry @map("Ajuste-Entrada")
+  AdjustExit  @map("Ajuste-Salida")
 
-  @@map("movimientos_tipo")
+  @@map("movement_type")
 }
 
 enum SupplierStatus {
   Active   @map("Activo")
   Inactive @map("Inactivo")
 
-  @@map("proveedores_estado")
+  @@map("supplier_status")
 }
 
 enum SaleStatus {
   Completed @map("Completada")
   Cancelled @map("Cancelada")
 
-  @@map("ventas_estado")
+  @@map("sale_status")
 }
 
 enum ScheduleStatus {
   Active   @map("Activo")
   Inactive @map("Inactivo")
 
-  @@map("horarios_atencion_estado")
+  @@map("schedule_status")
 }
 
 enum UserStatus {
   Active   @map("Activo")
   Inactive @map("Inactivo")
 
-  @@map("usuarios_estado")
+  @@map("user_status")
 }
 
 enum ProductStatus {
   Active   @map("Activo")
   Inactive @map("Inactivo")
 
-  @@map("productos_estado")
+  @@map("product_status")
+}
+
+enum UnitOfMeasureStatus {
+  Active   @map("Activo")
+  Inactive @map("Inactivo")
+
+  @@map("unit_of_measure_status")
 }
 
 enum StoreStatus {
-  Active    @map("Activo")
-  Inactive  @map("Inactivo")
-  Pending   @map("Pendiente")
+  Active     @map("Activo")
+  Inactive   @map("Inactivo")
+  Pending    @map("Pendiente")
   Incomplete @map("Incompleto")
-  Rejected  @map("Rechazado")
+  Rejected   @map("Rechazado")
 
-  @@map("tiendas_estado")
+  @@map("store_status")
+}
+
+enum RoleStatus {
+  Active   @map("Activo")
+  Inactive @map("Inactivo")
+
+  @@map("role_status")
+}
+
+enum AuditLogStatus {
+  Active   @map("Activo")
+  Inactive @map("Inactivo")
+
+  @@map("audit_log_status")
 }

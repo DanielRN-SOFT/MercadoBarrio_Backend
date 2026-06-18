@@ -1,122 +1,161 @@
 import { UserStatus } from "../../../generated/prisma/index.js";
 import prisma from "../../../prismaClient.js";
 
-export const getRoles = async (req, res) => {
-  // Obtenemos la pagina desde el query param, por defecto pagina 1
-  const page = req.query.page || 1;
-  const limit = parseInt(process.env.PAGINATION_LIMIT) || 10;
+export const getRoles = async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(process.env.PAGINATION_LIMIT) || 10;
+    const skip = (page - 1) * limit;
 
-  // Si estamos en página 1: skip=0, página 2: skip=10, página 3: skip=20...
-  const skip = (page - 1) * limit;
+    const [total, roles] = await Promise.all([
+      prisma.role.count(),
+      prisma.role.findMany({
+        skip,
+        take: limit,
+        select: { id: true, name: true },
+      }),
+    ]);
 
-  // Total de registros (para saber cuántas páginas hay en total)
-  const total = await prisma.role.count();
-
-  const roles = await prisma.role.findMany({
-    skip,
-    take: limit,
-    select: {
-      id: true,
-      name: true,
-    },
-  });
-
-  res.json({
-    data: roles,
-    meta: {
-      total,
-      page,
-      totalPages: Math.ceil(total / limit),
-    },
-  });
+    res.json({
+      data: roles,
+      meta: {
+        total,
+        page,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
-export const getRoleById = async (req, res) => {
+export const getRoleById = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id);
+
+    if (isNaN(id)) {
+      const error = new Error("El id proporcionado no es válido");
+      error.statusCode = 400;
+      throw error;
+    }
+
     const rol = await prisma.role.findUnique({
       where: { id },
-      select: {
-        id: true,
-        name: true,
-      },
+      select: { id: true, name: true },
     });
 
-    if (rol) {
-      res.json({ rol });
-    } else {
-      res.status(500);
-      throw new Error("Rol no encontrado");
+    if (!rol) {
+      const error = new Error("Rol no encontrado");
+      error.statusCode = 404;
+      throw error;
     }
+
+    res.json({ data: rol });
   } catch (error) {
-    res.status(404);
-    throw new Error(error.message);
+    next(error);
   }
 };
 
-export const createRole = async (req, res) => {
+export const createRole = async (req, res, next) => {
   try {
     const { name } = req.body;
+
+    if (!name || typeof name !== "string" || !name.trim()) {
+      const error = new Error("El nombre del rol es requerido");
+      error.statusCode = 400;
+      throw error;
+    }
+
     const createdRole = await prisma.role.create({
-      data: {
-        name,
-      },
+      data: { name: name.trim() },
     });
-    res.json(createdRole);
+
+    res.status(201).json({
+      data: createdRole,
+      message: "Rol creado correctamente",
+    });
   } catch (error) {
-    res.status(500);
-    throw new Error(error.message);
+    if (error.code === "P2002") {
+      error.statusCode = 409;
+      error.message = "Ya existe un rol con ese nombre";
+    }
+    next(error);
   }
 };
 
-export const updateRole = async (req, res) => {
+export const updateRole = async (req, res, next) => {
   try {
     const { name } = req.body;
     const id = parseInt(req.params.id);
 
-    const role = await prisma.role.findUnique({ where: { id } });
+    if (isNaN(id)) {
+      const error = new Error("El id proporcionado no es válido");
+      error.statusCode = 400;
+      throw error;
+    }
 
+    if (!name || typeof name !== "string" || !name.trim()) {
+      const error = new Error("El nombre del rol es requerido");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const role = await prisma.role.findUnique({ where: { id } });
     if (!role) {
-      res.status(404);
-      throw new Error("Rol no encontrado");
+      const error = new Error("Rol no encontrado");
+      error.statusCode = 404;
+      throw error;
     }
 
     const updatedRole = await prisma.role.update({
-      data: { name },
+      data: { name: name.trim() },
       where: { id },
     });
 
-    res.status(200).json(updatedRole);
+    res.status(200).json({
+      data: updatedRole,
+      message: "Rol actualizado correctamente",
+    });
   } catch (error) {
-    res.status(500);
-    throw new Error(error.message);
+    if (error.code === "P2002") {
+      error.statusCode = 409;
+      error.message = "Ya existe un rol con ese nombre";
+    }
+    next(error);
   }
 };
 
-export const deleteRole = async (req, res) => {
+export const deleteRole = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id);
-    const role = await prisma.role.findUnique({ where: { id } });
 
-    if (role) {
-      const userRole = await prisma.user.findFirst({ where: { roleId: id } });
-
-      if (userRole) {
-        res.status(400);
-        throw new Error("Ya existe un usuario asociado a ese rol");
-      }
-
-      const deletedRole = await prisma.role.delete({
-        where: { id },
-      });
-
-      res.json({ deletedRole });
-    } else {
-      res.status(404);
-      throw new Error("Rol no encontrado");
+    if (isNaN(id)) {
+      const error = new Error("El id proporcionado no es válido");
+      error.statusCode = 400;
+      throw error;
     }
+
+    const role = await prisma.role.findUnique({ where: { id } });
+    if (!role) {
+      const error = new Error("Rol no encontrado");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    const userRole = await prisma.user.findFirst({ where: { roleId: id } });
+    if (userRole) {
+      const error = new Error("Ya existe un usuario asociado a ese rol");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const deletedRole = await prisma.role.delete({ where: { id } });
+
+    res.json({
+      data: deletedRole,
+      message: "Rol eliminado correctamente",
+    });
   } catch (error) {
-    res.status(500);
-    throw new Error(error.message);
+    next(error);
   }
 };

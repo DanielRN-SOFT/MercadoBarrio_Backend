@@ -72,7 +72,6 @@ export const createCategory = async (req, res) => {
     });
     res.status(201).json({
       data: createdCategory,
-      status: 201,
       message: "Categoria de producto creada correctamente",
     });
   } catch (error) {
@@ -102,7 +101,6 @@ export const updateProductCategory = async (req, res) => {
 
     res.status(200).json({
       data: updatedCategory,
-      status: 200,
       message: "Categoria de producto editada correctamente",
     });
   } catch (error) {
@@ -137,7 +135,6 @@ export const deleteProductCategory = async (req, res) => {
 
       res.status(200).json({
         data: deletedProductCategory,
-        status: 200,
         message: "Categoria de producto eliminada correctamente",
       });
     } else {
@@ -164,13 +161,10 @@ export const restoreProductCategory = async (req, res) => {
       },
     });
 
-    res
-      .status(200)
-      .json({
-        data: restoredProductCategory,
-        status: 200,
-        message: "Categoria de producto restablecida correctamente",
-      });
+    res.status(200).json({
+      data: restoredProductCategory,
+      message: "Categoria de producto restablecida correctamente",
+    });
   } else {
     res.status(404);
     throw new Error("Categoria de producto no encontrada");
