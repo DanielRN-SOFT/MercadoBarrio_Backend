@@ -76,8 +76,7 @@ export const updateUser = async (req, res, next) => {
   try {
     const { name, email, phone } = req.body;
     const id = parseInt(req.params.id);
-
-    // Verificar el id
+    
     verifyNumberID(id);
 
     // Verificar que todos los campos si lleguen y sean string
@@ -112,7 +111,6 @@ export const deleteUser = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id);
 
-    // Verificar ID;
     verifyNumberID(id);
 
     const user = await prisma.user.findUnique({ where: { id } });
@@ -145,7 +143,6 @@ export const restoreUser = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id);
 
-    // Verificar que sea un numero el id
     verifyNumberID(id);
 
     const user = await prisma.user.findUnique({ where: { id } });

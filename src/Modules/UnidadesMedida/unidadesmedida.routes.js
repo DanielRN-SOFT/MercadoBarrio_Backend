@@ -5,7 +5,7 @@ import {
   createUnitOfMeasure,
   updateUnitOfMeasure,
   deleteUnitOfMeasure,
-  restoreUnifOfMeasure,
+  restoreUnitOfMeasure,
 } from "./unidadesMedida.controller.js";
 
 const router = express.Router();
@@ -14,6 +14,6 @@ router.get("/:id", getUnitOfMeasureById);
 router.post("/", createUnitOfMeasure);
 router.put("/:id", updateUnitOfMeasure);
 router.put("/delete/:id", deleteUnitOfMeasure);
-router.put("/restore/:id", restoreUnifOfMeasure);
+router.put("/restore/:id", restoreUnitOfMeasure);
 
 export default router;

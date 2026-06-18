@@ -1,30 +1,29 @@
 import { StoreCategoryStatus } from "../../../generated/prisma/index.js";
 import prisma from "../../../prismaClient.js";
+import verifyFields from "../../helpers/verifyStringFields.js";
+import verifyNumberID from "../../helpers/verifyNumberID.js";
 
-export const getStoreCategories = async (req, res) => {
+export const getStoreCategories = async (req, res, next) => {
   try {
-    // Obtenemos la pagina desde el query param, por defecto pagina 1
     const page = req.query.page || 1;
     const limit = parseInt(process.env.PAGINATION_LIMIT) || 10;
-
-    // Si estamos en página 1: skip=0, página 2: skip=10, página 3: skip=20...
     const skip = (page - 1) * limit;
 
-    // Total de registros (para saber cuántas páginas hay en total)
-    const total = await prisma.storeCategory.count();
-
-    const storeCategory = await prisma.storeCategory.findMany({
-      skip,
-      take: limit,
-      select: {
-        id: true,
-        name: true,
-        status: true,
-      },
-    });
+    const [total, storeCategories] = await Promise.all([
+      prisma.storeCategory.count(),
+      prisma.storeCategory.findMany({
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          name: true,
+          status: true,
+        },
+      }),
+    ]);
 
     res.json({
-      data: storeCategory,
+      data: storeCategories,
       meta: {
         total,
         page,
@@ -32,14 +31,15 @@ export const getStoreCategories = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500);
-    throw new Error("Ocurrio un error en el servidor");
+    next(error);
   }
 };
 
-export const getStoreCategoryById = async (req, res) => {
+export const getStoreCategoryById = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id);
+    verifyNumberID(id);
+
     const storeCategory = await prisma.storeCategory.findUnique({
       where: { id },
       select: {
@@ -50,45 +50,56 @@ export const getStoreCategoryById = async (req, res) => {
     });
 
     if (storeCategory) {
-      res.json({ storeCategory });
+      res.json({ data: storeCategory });
     } else {
-      res.status(500);
-      throw new Error("Categoria de tienda no encontrada");
+      res.status(404);
+      throw new Error("Categoría de tienda no encontrada");
     }
   } catch (error) {
-    res.status(404);
-    throw new Error(error.message);
+    next(error);
   }
 };
 
-export const createStoreCategory = async (req, res) => {
+export const createStoreCategory = async (req, res, next) => {
   try {
     const { name } = req.body;
+    verifyFields({ name });
+
     const createdCategory = await prisma.storeCategory.create({
       data: {
         name,
         status: StoreCategoryStatus.Active,
       },
     });
-    res.json(createdCategory);
+
+    res.status(201).json({
+      data: createdCategory,
+      message: "Categoría de tienda creada correctamente",
+    });
   } catch (error) {
-    res.status(500);
-    throw new Error(error.message);
+    if (error.code === "P2002") {
+      error.statusCode = 409;
+      error.message = "Ese nombre ya está registrado en el sistema";
+    }
+    next(error);
   }
 };
 
-export const updateStoreCategory = async (req, res) => {
+export const updateStoreCategory = async (req, res, next) => {
   try {
     const { name } = req.body;
     const id = parseInt(req.params.id);
 
+    verifyNumberID(id);
+    verifyFields({ name });
+
     const storeCategory = await prisma.storeCategory.findUnique({
       where: { id },
     });
-
     if (!storeCategory) {
-      res.status(404);
-      throw new Error("Categoria de tienda no encontrada");
+      const error = new Error("Categoría de tienda no encontrada");
+      error.statusCode = 404;
+      throw error;
     }
 
     const updatedCategory = await prisma.storeCategory.update({
@@ -96,65 +107,80 @@ export const updateStoreCategory = async (req, res) => {
       where: { id },
     });
 
-    res.status(200).json(updatedCategory);
+    res.status(200).json({
+      data: updatedCategory,
+      message: "Categoría de tienda editada exitosamente",
+    });
   } catch (error) {
-    res.status(500);
-    throw new Error(error.message);
+    if (error.code === "P2002") {
+      error.statusCode = 409;
+      error.message = "Ese nombre ya está registrado en el sistema";
+    }
+    next(error);
   }
 };
 
-export const deleteStoreCategory = async (req, res) => {
+export const deleteStoreCategory = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id);
+    verifyNumberID(id);
+
     const storeCategory = await prisma.storeCategory.findUnique({
       where: { id },
     });
-
-    if (storeCategory) {
-      const isExistStoreCategory = await prisma.store.findFirst({
-        where: { storeCategoryId: id },
-      });
-
-      if (isExistStoreCategory) {
-        res.status(400);
-        throw new Error("Esa categoria esta asociada a una tienda");
-      }
-
-      const deletedStoreCategory = await prisma.storeCategory.update({
-        where: { id },
-        data: {
-          status: storeCategory.Inactive,
-        },
-      });
-
-      res.status(200).json({ deletedStoreCategory });
-    } else {
-      res.status(404);
-      throw new Error("Categoria de tienda no encontrada");
+    if (!storeCategory) {
+      const error = new Error("Categoría de tienda no encontrada");
+      error.statusCode = 404;
+      throw error;
     }
+
+    const isAssociated = await prisma.store.findFirst({
+      where: { storeCategoryId: id },
+    });
+    if (isAssociated) {
+      const error = new Error("Esa categoría está asociada a una tienda");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const deletedStoreCategory = await prisma.storeCategory.update({
+      where: { id },
+      data: { status: StoreCategoryStatus.Inactive },
+    });
+
+    res.json({
+      data: deletedStoreCategory,
+      message: "Categoría de tienda eliminada correctamente",
+    });
   } catch (error) {
-    res.status(500);
-    throw new Error(error.message);
+    next(error);
   }
 };
 
-export const restoreStoreCategory = async (req, res) => {
-  const id = parseInt(req.params.id);
-  const storeCategory = await prisma.storeCategory.findUnique({
-    where: { id },
-  });
+export const restoreStoreCategory = async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id);
+    verifyNumberID(id);
 
-  if (storeCategory) {
+    const storeCategory = await prisma.storeCategory.findUnique({
+      where: { id },
+    });
+    if (!storeCategory) {
+      const error = new Error("Categoría de tienda no encontrada");
+      error.statusCode = 404;
+      throw error;
+    }
+
     const restoredStoreCategory = await prisma.storeCategory.update({
       where: { id },
-      data: {
-        status: storeCategory.Active,
-      },
+      data: { status: StoreCategoryStatus.Active },
     });
 
-    res.status(200).json({ restoredStoreCategory });
-  } else {
-    res.status(404);
-    throw new Error("Categoria de tienda no encontrada");
+    res.json({
+      data: restoredStoreCategory,
+      message: "Categoría de tienda restablecida correctamente",
+    });
+  } catch (error) {
+    next(error);
   }
 };

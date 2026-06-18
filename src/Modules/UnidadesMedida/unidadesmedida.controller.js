@@ -1,30 +1,29 @@
 import { UnitOfMeasureStatus } from "../../../generated/prisma/index.js";
 import prisma from "../../../prismaClient.js";
+import verifyFields from "../../helpers/verifyStringFields.js";
+import verifyNumberID from "../../helpers/verifyNumberID.js";
 
-export const getUnitsOfMeasure = async (req, res) => {
+export const getUnitsOfMeasure = async (req, res, next) => {
   try {
-    // Obtenemos la pagina desde el query param, por defecto pagina 1
     const page = req.query.page || 1;
     const limit = parseInt(process.env.PAGINATION_LIMIT) || 10;
-
-    // Si estamos en página 1: skip=0, página 2: skip=10, página 3: skip=20...
     const skip = (page - 1) * limit;
 
-    // Total de registros (para saber cuántas páginas hay en total)
-    const total = await prisma.unitOfMeasure.count();
-
-    const unitOfMeasure = await prisma.unitOfMeasure.findMany({
-      skip,
-      take: limit,
-      select: {
-        id: true,
-        name: true,
-        status: true,
-      },
-    });
+    const [total, unitsOfMeasure] = await Promise.all([
+      prisma.unitOfMeasure.count(),
+      prisma.unitOfMeasure.findMany({
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          name: true,
+          status: true,
+        },
+      }),
+    ]);
 
     res.json({
-      data: unitOfMeasure,
+      data: unitsOfMeasure,
       meta: {
         total,
         page,
@@ -32,15 +31,16 @@ export const getUnitsOfMeasure = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500);
-    throw new Error("Ocurrio un error en el servidor");
+    next(error);
   }
 };
 
-export const getUnitOfMeasureById = async (req, res) => {
+export const getUnitOfMeasureById = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id);
-    const unitMeasure = await prisma.unitOfMeasure.findUnique({
+    verifyNumberID(id);
+
+    const unitOfMeasure = await prisma.unitOfMeasure.findUnique({
       where: { id },
       select: {
         id: true,
@@ -49,52 +49,53 @@ export const getUnitOfMeasureById = async (req, res) => {
       },
     });
 
-    if (unitMeasure) {
-      res.json({ unitMeasure });
+    if (unitOfMeasure) {
+      res.json({ data: unitOfMeasure });
     } else {
-      res.status(500);
+      res.status(404);
       throw new Error("Unidad de medida no encontrada");
     }
   } catch (error) {
-    res.status(404);
-    throw new Error(error.message);
+    next(error);
   }
 };
 
-export const createUnitOfMeasure = async (req, res) => {
+export const createUnitOfMeasure = async (req, res, next) => {
   try {
     const { name } = req.body;
+    verifyFields({ name });
+
     const unitOfMeasure = await prisma.unitOfMeasure.create({
       data: {
         name,
         status: UnitOfMeasureStatus.Active,
       },
     });
-    res
-      .status(201)
-      .json({
-        data: unitOfMeasure,
-        status: 201,
-        message: "Unidad de medida creada correctamente",
-      });
+
+    res.status(201).json({
+      data: unitOfMeasure,
+      message: "Unidad de medida creada correctamente",
+    });
   } catch (error) {
-    res.status(500);
-    throw new Error(error.message);
+    next(error);
   }
 };
 
-export const updateUnitOfMeasure = async (req, res) => {
+export const updateUnitOfMeasure = async (req, res, next) => {
   try {
     const { name } = req.body;
     const id = parseInt(req.params.id);
 
+    verifyNumberID(id);
+    verifyFields({ name });
+
     const unitOfMeasure = await prisma.unitOfMeasure.findUnique({
       where: { id },
     });
-
     if (!unitOfMeasure) {
-      res.status(404);
-      throw new Error("Unidad de medida no encontrada");
+      const error = new Error("Unidad de medida no encontrada");
+      error.statusCode = 404;
+      throw error;
     }
 
     const updatedUnitOfMeasure = await prisma.unitOfMeasure.update({
@@ -102,65 +103,82 @@ export const updateUnitOfMeasure = async (req, res) => {
       where: { id },
     });
 
-    res.json(updatedUnitOfMeasure);
+    res.status(200).json({
+      data: updatedUnitOfMeasure,
+      message: "Unidad de medida editada exitosamente",
+    });
   } catch (error) {
-    res.status(500);
-    throw new Error(error.message);
+    if (error.code === "P2002") {
+      error.statusCode = 409;
+      error.message = "Ese nombre ya está registrado en el sistema";
+    }
+    next(error);
   }
 };
 
-export const deleteUnitOfMeasure = async (req, res) => {
+export const deleteUnitOfMeasure = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id);
+    verifyNumberID(id);
+
     const unitOfMeasure = await prisma.unitOfMeasure.findUnique({
       where: { id },
     });
-
-    if (unitOfMeasure) {
-      const isExistUnitOfMeasure = await prisma.product.findFirst({
-        where: { unitOfMeasureId: id },
-      });
-
-      if (isExistUnitOfMeasure) {
-        res.status(400);
-        throw new Error("Esa unidad de medida esta asociada a una tienda");
-      }
-
-      const deletedUnitOfMeasure = await prisma.storeCategory.update({
-        where: { id },
-        data: {
-          status: UnitOfMeasureStatus.Inactive,
-        },
-      });
-
-      res.status(200).json({ deletedUnitOfMeasure });
-    } else {
-      res.status(404);
-      throw new Error("Unidad de medida no encontrada");
+    if (!unitOfMeasure) {
+      const error = new Error("Unidad de medida no encontrada");
+      error.statusCode = 404;
+      throw error;
     }
+
+    const isAssociated = await prisma.product.findFirst({
+      where: { unitOfMeasureId: id },
+    });
+    if (isAssociated) {
+      const error = new Error(
+        "Esa unidad de medida está asociada a un producto",
+      );
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const deletedUnitOfMeasure = await prisma.unitOfMeasure.update({
+      where: { id },
+      data: { status: UnitOfMeasureStatus.Inactive },
+    });
+
+    res.json({
+      data: deletedUnitOfMeasure,
+      message: "Unidad de medida eliminada correctamente",
+    });
   } catch (error) {
-    res.status(500);
-    throw new Error(error.message);
+    next(error);
   }
 };
 
-export const restoreUnifOfMeasure = async (req, res) => {
-  const id = parseInt(req.params.id);
-  const unitOfMeasure = await prisma.unitOfMeasure.findUnique({
-    where: { id },
-  });
+export const restoreUnitOfMeasure = async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id);
+    verifyNumberID(id);
 
-  if (unitOfMeasure) {
+    const unitOfMeasure = await prisma.unitOfMeasure.findUnique({
+      where: { id },
+    });
+    if (!unitOfMeasure) {
+      const error = new Error("Unidad de medida no encontrada");
+      error.statusCode = 404;
+      throw error;
+    }
+
     const restoredUnitOfMeasure = await prisma.unitOfMeasure.update({
       where: { id },
-      data: {
-        status: UnitOfMeasureStatus.Active,
-      },
+      data: { status: UnitOfMeasureStatus.Active },
     });
 
-    res.status(200).json({ restoredUnitOfMeasure });
-  } else {
-    res.status(404);
-    throw new Error("Unidad de medida no encontrada");
+    res.json({
+      data: restoredUnitOfMeasure,
+      message: "Unidad de medida restablecida correctamente",
+    });
+  } catch (error) {
+    next(error);
   }
 };
