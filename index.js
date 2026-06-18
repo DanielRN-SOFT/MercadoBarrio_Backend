@@ -8,6 +8,8 @@ import userRouter from "./src/Modules/Usuarios/usuarios.routes.js";
 import errorHandler from "./src/middlewares/ErrorMiddleware.js";
 import roleRouter from "./src/Modules/Roles/roles.routes.js";
 import productCategoryRouter from "./src/Modules/CategoriasProductos/categoriasProductos.routes.js";
+import unitOfMeasureRouter from "./src/Modules/UnidadesMedida/unidadesmedida.routes.js";
+import storeCategoryRouter from "./src/Modules/CategoriasTiendas/categoriasTiendas.routes.js";
 
 // Config
 const port = process.env.PORT || 5000;
@@ -24,6 +26,8 @@ app.use("/api/auth", authRouter);
 app.use("/api/users", userRouter);
 app.use("/api/roles", roleRouter);
 app.use("/api/product-categories", productCategoryRouter);
+app.use("/api/store-categories", router);
+app.use("/api/unit-measures", storeCategoryRouter);
 app.use(errorHandler);
 
 // Servidor
