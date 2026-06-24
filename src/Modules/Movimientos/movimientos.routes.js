@@ -3,6 +3,7 @@ import {
   getMovements,
   getMovementById,
   createMovements,
+  cancelMovement,
 } from "./movimientos.controller.js";
 import {
   attachStore,
@@ -13,6 +14,7 @@ import {
 const router = express.Router();
 router.get("/", protect, isGrocer, attachStore, getMovements);
 router.get("/:id", protect, isGrocer, attachStore, getMovementById);
-router.get("/", protect, isGrocer, attachStore, createMovements);
+router.post("/", protect, isGrocer, attachStore, createMovements);
+router.post("/delete/:id", protect, isGrocer, attachStore, cancelMovement);
 
 export default router;
