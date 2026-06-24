@@ -12,7 +12,7 @@ import { isMyStore } from "../../helpers/isMyStore.js";
 
 export const getMovements = async (req, res, next) => {
   try {
-    const page = req.query.page || 1;
+    const page = parseInt(req.query.page) || 1;
     const limit = parseInt(process.env.PAGINATION_LIMIT) || 10;
     const skip = (page - 1) * limit;
 
@@ -77,15 +77,16 @@ export const getMovementById = async (req, res, next) => {
       },
     });
 
-    // Evitar que se pueda acceder a otra informacion de otra tienda
-    isMyStore(req.user.id, movement.userId);
-
-    if (movement) {
-      res.json({ data: movement });
-    } else {
+    // Primero verificamos que exista, antes de leer sus propiedades
+    if (!movement) {
       res.status(404);
       throw new Error("Movimiento no encontrado");
     }
+
+    // Evitar que se pueda acceder a otra informacion de otra tienda
+    isMyStore(req.user.id, movement.userId);
+
+    res.json({ data: movement });
   } catch (error) {
     next(error);
   }
@@ -96,19 +97,30 @@ export const createMovements = async (req, res, next) => {
     const { type, reason, products = [] } = req.body;
     const supplierId = parseInt(req.body.supplierId);
 
+    // Validar que el type recibido sea uno de los permitidos
+    if (!Object.values(MovementType).includes(type)) {
+      const error = new Error("El tipo de movimiento no es válido");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const isExitType = [MovementType.Exit, MovementType.AdjustExit].includes(
+      type,
+    );
+
     // Validaciones ANTES de tocar la BD (fail fast)
     isNumberStock(products);
-    if (type == MovementType.Exit) {
+    if (isExitType) {
       await isExistStock(products);
     }
 
-    // Transacciones para que todas las consultas se ejecuten a la vez
+    // Transaccion: si cualquier consulta falla, se revierte todo el bloque
     const movement = await prisma.$transaction(async (tx) => {
       const movementObj = {
         date: getDateNow(),
-        type: MovementStatus.Active,
+        type,
         userId: req.user.id,
-        store: req.store.id,
+        storeId: req.store.id,
         status: MovementStatus.Active,
       };
       if (reason) movementObj.reason = reason;
@@ -130,6 +142,38 @@ export const createMovements = async (req, res, next) => {
         }),
       );
 
+      // Ajustar el stock: Entry/AdjustEntry suma, Exit/AdjustExit resta
+      for (const product of products) {
+        if (isExitType) {
+          // Update atomico con verificacion de stock suficiente,
+          // evita condiciones de carrera entre salidas concurrentes
+          const result = await tx.product.updateMany({
+            where: {
+              id: product.productId,
+              currentStock: { gte: product.quantity },
+            },
+            data: {
+              currentStock: { decrement: product.quantity },
+            },
+          });
+
+          if (result.count === 0) {
+            const error = new Error(
+              `Stock insuficiente para el producto con id ${product.productId}`,
+            );
+            error.statusCode = 400;
+            throw error;
+          }
+        } else {
+          await tx.product.update({
+            where: { id: product.productId },
+            data: {
+              currentStock: { increment: product.quantity },
+            },
+          });
+        }
+      }
+
       return createdMovement;
     });
 
@@ -137,6 +181,79 @@ export const createMovements = async (req, res, next) => {
       data: movement,
       message: "Movimiento registrado correctamente",
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const cancelMovement = async (req, res, next) => {
+  try {
+    const movementId = parseInt(req.params.id);
+    verifyNumberID(movementId);
+
+    await prisma.$transaction(async (tx) => {
+      const movement = await tx.movement.findUnique({
+        where: { id: movementId },
+        include: { details: true },
+      });
+
+      if (!movement) {
+        const error = new Error("Movimiento no encontrado");
+        error.statusCode = 404;
+        throw error;
+      }
+      if (movement.status === MovementStatus.Cancelled) {
+        const error = new Error("El movimiento ya está cancelado");
+        error.statusCode = 400;
+        throw error;
+      }
+
+      // Revertir el efecto en stock (inverso al que se aplico al crear)
+      const isExit = [MovementType.Exit, MovementType.AdjustExit].includes(
+        movement.type,
+      );
+
+      for (const detail of movement.details) {
+        if (isExit) {
+          // Se devuelve el stock que se habia restado
+          await tx.product.update({
+            where: { id: detail.productId },
+            data: {
+              currentStock: { increment: detail.quantity },
+            },
+          });
+        } else {
+          // Se quita el stock que se habia sumado, validando que no quede negativo
+          const result = await tx.product.updateMany({
+            where: {
+              id: detail.productId,
+              currentStock: { gte: detail.quantity },
+            },
+            data: {
+              currentStock: { decrement: detail.quantity },
+            },
+          });
+
+          if (result.count === 0) {
+            const error = new Error(
+              `No se puede cancelar: el producto con id ${detail.productId} ya no tiene suficiente stock para revertir el movimiento`,
+            );
+            error.statusCode = 400;
+            throw error;
+          }
+        }
+      }
+
+      await tx.movement.update({
+        where: { id: movementId },
+        data: {
+          status: MovementStatus.Cancelled,
+          cancellationDate: getDateNow(),
+        },
+      });
+    });
+
+    res.status(200).json({ message: "Movimiento cancelado correctamente" });
   } catch (error) {
     next(error);
   }
