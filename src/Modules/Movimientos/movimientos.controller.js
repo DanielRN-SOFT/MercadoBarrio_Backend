@@ -8,7 +8,7 @@ import {
 import getDateNow from "../../helpers/getDateNow.js";
 import isExistStock from "../../helpers/isExistStock.js";
 import isNumberStock from "../../helpers/isNumberStock.js";
-import { isMyStore } from "../../helpers/isMyStore.js";
+import isMyStore from "../../helpers/isMyStore.js";
 
 export const getMovements = async (req, res, next) => {
   try {
@@ -84,7 +84,7 @@ export const getMovementById = async (req, res, next) => {
     }
 
     // Evitar que se pueda acceder a otra informacion de otra tienda
-    isMyStore(req.user.id, movement.userId);
+    isMyStore(req, movement);
 
     res.json({ data: movement });
   } catch (error) {

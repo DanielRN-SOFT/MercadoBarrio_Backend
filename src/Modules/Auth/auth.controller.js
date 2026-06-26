@@ -77,15 +77,17 @@ export const logoutUser = (req, res) => {
   res.status(200).json({ message: "Log out exitoso" });
 };
 
-export const getUserProfile = (req, res) => {
-  const user = req.user.id;
+export const getUserProfile = async (req, res) => {
+  const id = req.user.id;
+  const user = await prisma.user.findUnique({ where: { id } });
+  console.log(user);
 
   if (user) {
     res.json({
       id: user.id,
-      nombre: user.nombre,
+      nombre: user.name,
       email: user.email,
-      roles_id: user.roles_id,
+      roles_id: user.roleId,
     });
   } else {
     res.status(404);

@@ -5,6 +5,7 @@ import {
 import prisma from "../../../prismaClient.js";
 import verifyFields from "../../helpers/verifyStringFields.js";
 import verifyNumberID from "../../helpers/verifyNumberID.js";
+import isMyStore from "../../helpers/isMyStore.js";
 
 export const getAttendanceSchedule = async (req, res, next) => {
   try {
@@ -22,36 +23,39 @@ export const getAttendanceSchedule = async (req, res, next) => {
       Sunday: 7,
     };
 
-    const [total, attendanceSchedules] = await Promise.all([
+    let [total, attendanceSchedules] = await Promise.all([
       prisma.attendanceSchedule.count({
         where: {
           storeId: req.store.id,
         },
       }),
-      prisma.attendanceSchedule
-        .findMany({
-          skip,
-          take: limit,
-          where: {
-            storeId: req.store.id,
-          },
-          select: {
-            id: true,
-            name: true,
-            status: true,
-          },
-        })
-        .sort((a, b) => WEEK_ORDER[a.weekDay] - WEEK_ORDER[b.weekDay]),
+      prisma.attendanceSchedule.findMany({
+        skip,
+        take: limit,
+        where: {
+          storeId: req.store.id,
+        },
+        select: {
+          id: true,
+          weekDay: true,
+          startTime: true,
+          endTime: true,
+          status: true,
+        },
+      }),
     ]);
 
-    res.json({
-      data: attendanceSchedules,
-      meta: {
-        total,
-        page,
-        totalPages: Math.ceil(total / limit),
-      },
-    });
+    ((attendanceSchedules = attendanceSchedules.sort(
+      (a, b) => WEEK_ORDER[a.weekDay] - WEEK_ORDER[b.weekDay],
+    )),
+      res.json({
+        data: attendanceSchedules,
+        meta: {
+          total,
+          page,
+          totalPages: Math.ceil(total / limit),
+        },
+      }));
   } catch (error) {
     next(error);
   }
@@ -71,6 +75,8 @@ export const getAttendanceScheduleById = async (req, res, next) => {
         status: true,
       },
     });
+
+    isMyStore(req, attendanceSchedule);
 
     if (attendanceSchedule) {
       res.json({ data: attendanceSchedule });
@@ -222,7 +228,7 @@ export const restoreAttendanceSchedule = async (req, res, next) => {
     verifyNumberID(id);
 
     const attendanceSchedule = await prisma.attendanceSchedule.findUnique({
-      where: { id , storeId: req.store.id},
+      where: { id, storeId: req.store.id },
     });
     if (!attendanceSchedule) {
       const error = new Error("Horario de atencion no encontrado");
