@@ -5,6 +5,8 @@ import {
   getUserProfile,
   updateUserProfile,
   registerUser,
+  forgotPassword,
+  resetPassword,
 } from "./auth.controller.js";
 import { protect } from "../../middlewares/authMiddleware.js";
 
@@ -15,5 +17,7 @@ router.post("/register", registerUser);
 router.post("/logout", logoutUser);
 router.get("/profile", protect, getUserProfile);
 router.put("/profile", protect, updateUserProfile);
+router.post("/forgot-password", forgotPassword);
+router.post("/forgot-password/:token", resetPassword);
 
 export default router;

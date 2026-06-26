@@ -2,6 +2,8 @@ import prisma from "../../../prismaClient.js";
 import bcrypt from "bcryptjs";
 import generateToken from "../../helpers/generateToken.js";
 import { UserStatus } from "../../../generated/prisma/index.js";
+import generarId from "../../helpers/generateId.js";
+import emailForgotPassword from "../../../emails/emailForgotPassword.js";
 export const authUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
@@ -126,4 +128,61 @@ export const updateUserProfile = async (req, res, next) => {
   }
 };
 
+export const forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    const user = await prisma.user.findUnique({ where: { email } });
 
+    if (!user) {
+      const error = "El email ingresado no se encuentra registrado";
+      error.statusCode = 401;
+      throw error;
+    }
+
+    await prisma.user.update({
+      where: { email },
+      data: {
+        token: generarId(),
+      },
+    });
+    console.log(user);
+    emailForgotPassword({
+      name: user.name,
+      email: user.email,
+      token: user.token,
+    });
+
+    res.json({
+      message: "Hemos enviado un email con las instrucciones",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const resetPassword = async (req, res, next) => {
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    const user = await prisma.user.findFirst({ where: { token } });
+
+    if (!user) {
+      const error = new Error("Hubo un error, intentalo más tarde");
+      error.statusCode = 400;
+      next(error);
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        token: null,
+        password: bcrypt.hashSync(password, 10),
+      },
+    });
+
+    res.json({ msg: "La contraseña ha sido restablecida exitosamente" });
+  } catch (error) {
+    next(error);
+  }
+};

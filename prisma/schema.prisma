@@ -189,6 +189,7 @@ model User {
   email     String     @unique @db.VarChar(150)
   password  String     @db.VarChar(250)
   phone     String     @db.VarChar(45)
+  token     String?     @db.VarChar(255)
   status    UserStatus
   roleId    Int
   movements Movement[]
