@@ -63,7 +63,7 @@
 
               <!-- CTA Button -->
               <div style="text-align:center;margin-bottom:28px;">
-                <a href="${process.env.FRONTEND_URL}/cambiar-password/${token}"
+                <a href="${process.env.FRONTEND_URL}/auth/cambiar-password/${token}"
                   style="display:inline-block;background:linear-gradient(135deg,#1A73E8,#0D47A1);
                   color:#FFFFFF;text-decoration:none;font-size:15px;font-weight:700;
                   padding:14px 36px;border-radius:50px;
@@ -76,9 +76,9 @@
               <!-- Link alternativo -->
               <p style="margin:0 0 28px;color:#A0AEC0;font-size:12px;text-align:center;line-height:1.6;">
                 ¿El botón no funciona? Copia este enlace en tu navegador:<br/>
-                <a href="${process.env.FRONTEND_URL}/cambiar-password/${token}"
+                <a href="${process.env.FRONTEND_URL}/auth/cambiar-password/${token}"
                   style="color:#1A73E8;word-break:break-all;font-size:11px;">
-                  ${process.env.FRONTEND_URL}/cambiar-password/${token}
+                  ${process.env.FRONTEND_URL}/auth/cambiar-password/${token}
                 </a>
               </p>
 
