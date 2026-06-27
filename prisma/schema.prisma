@@ -153,10 +153,12 @@ model Store {
   id              Int                  @id @default(autoincrement())
   name            String               @db.VarChar(45)
   address         String               @db.VarChar(100)
+  neighborhood    String               @db.VarChar(100)
   longitude       Decimal              @db.Decimal(10, 8)
   latitude        Decimal              @db.Decimal(10, 8)
   description     String?              @db.Text
   logo            String?              @db.VarChar(200)
+  photo           String?              @db.VarChar(255)
   phone           String?              @db.VarChar(45)
   status          StoreStatus
   userId          Int
@@ -190,6 +192,7 @@ model User {
   password  String     @db.VarChar(250)
   phone     String     @db.VarChar(45)
   token     String?     @db.VarChar(255)
+  photo     String?     @db.VarChar(255)
   status    UserStatus
   roleId    Int
   movements Movement[]
