@@ -34,7 +34,7 @@ export const authUser = async (req, res, next) => {
     next(error);
   }
 };
-export const registerUser = async (req, res, error) => {
+export const registerUser = async (req, res, next) => {
   try {
     const { name, email, password, phone } = req.body;
 
@@ -86,7 +86,7 @@ export const logoutUser = (req, res) => {
   res.status(200).json({ message: "Log out exitoso" });
 };
 
-export const getUserProfile = async (req, res) => {
+export const getUserProfile = async (req, res, next) => {
   try {
     const id = req.user.id;
     const user = await prisma.user.findUnique({ where: { id } });
@@ -112,10 +112,10 @@ export const updateUserProfile = async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique(req.user.id);
     if (user) {
-      const updatedUser = await prisma.usuarios.update({
-        nombre: req.body.name || user.nombre,
+      const updatedUser = await prisma.user.update({
+        nombre: req.body.name || user.name,
         email: req.body.email || user.email,
-        telefono: req.body.telefono || user.telefono,
+        telefono: req.body.telefono || user.phone,
       });
 
       res.json(updatedUser);
@@ -134,12 +134,12 @@ export const forgotPassword = async (req, res, next) => {
     const user = await prisma.user.findUnique({ where: { email } });
 
     if (!user) {
-      const error = "El email ingresado no se encuentra registrado";
+      const error = new Error("El email ingresado no se encuentra registrado");
       error.statusCode = 401;
       throw error;
     }
 
-    await prisma.user.update({
+    const updatedUser = await prisma.user.update({
       where: { email },
       data: {
         token: generarId(),
@@ -147,9 +147,9 @@ export const forgotPassword = async (req, res, next) => {
     });
     console.log(user);
     emailForgotPassword({
-      name: user.name,
-      email: user.email,
-      token: user.token,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      token: updatedUser.token,
     });
 
     res.json({
@@ -170,7 +170,7 @@ export const resetPassword = async (req, res, next) => {
     if (!user) {
       const error = new Error("Hubo un error, intentalo más tarde");
       error.statusCode = 400;
-      next(error);
+      throw error;
     }
 
     await prisma.user.update({
