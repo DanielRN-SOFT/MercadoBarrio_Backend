@@ -397,3 +397,143 @@ export const restoreStore = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getMyStore = async (req, res, next) => {
+  try {
+    const store = await prisma.store.findFirst({
+      where: { userId: req.user.id },
+      select: {
+        id: true,
+        name: true,
+        address: true,
+        neighborhood: true,
+        longitude: true,
+        latitude: true,
+        description: true,
+        logo: true,
+        photo: true,
+        phone: true,
+        status: true,
+        storeCategoryId: true,
+        onboardingStep: true,
+      },
+    });
+
+    if (!store) {
+      const error = new Error("Aún no tienes una tienda registrada");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    res.json({ data: store });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const createMyStore = async (req, res, next) => {
+  try {
+    const { name, address, neighborhood, longitude, latitude, description, phone, photo, storeCategoryId } = req.body;
+
+    verifyFields({ name, address, neighborhood });
+
+    if (!storeCategoryId || isNaN(storeCategoryId)) {
+      const error = new Error("La categoría de tienda es obligatoria");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const storeCategory = await prisma.storeCategory.findUnique({
+      where: { id: parseInt(storeCategoryId) },
+    });
+    if (!storeCategory) {
+      const error = new Error("La categoría de tienda no existe");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    const existingStore = await prisma.store.findFirst({
+      where: { userId: req.user.id },
+    });
+    if (existingStore) {
+      const error = new Error("Ya tienes una tienda registrada");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const createdStore = await prisma.store.create({
+      data: {
+        name,
+        address,
+        neighborhood,
+        longitude: longitude ? parseFloat(longitude) : 0,
+        latitude: latitude ? parseFloat(latitude) : 0,
+        description,
+        phone,
+        photo,
+        userId: req.user.id,
+        storeCategoryId: parseInt(storeCategoryId),
+        status: StoreStatus.Pending,
+        onboardingStep: "completed",
+      },
+    });
+
+    res.status(201).json({
+      data: createdStore,
+      message: "Tienda registrada correctamente, está pendiente de aprobación",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateMyStore = async (req, res, next) => {
+  try {
+    const store = await prisma.store.findFirst({
+      where: { userId: req.user.id },
+    });
+
+    if (!store) {
+      const error = new Error("No tienes una tienda registrada");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    const { name, address, neighborhood, longitude, latitude, description, phone, photo, storeCategoryId } = req.body;
+
+    verifyFields({ name, address, neighborhood });
+
+    if (storeCategoryId) {
+      const storeCategory = await prisma.storeCategory.findUnique({
+        where: { id: parseInt(storeCategoryId) },
+      });
+      if (!storeCategory) {
+        const error = new Error("La categoría de tienda no existe");
+        error.statusCode = 404;
+        throw error;
+      }
+    }
+
+    const updatedStore = await prisma.store.update({
+      where: { id: store.id },
+      data: {
+        name,
+        address,
+        neighborhood,
+        longitude: longitude ? parseFloat(longitude) : store.longitude,
+        latitude: latitude ? parseFloat(latitude) : store.latitude,
+        description,
+        phone,
+        photo,
+        ...(storeCategoryId && { storeCategoryId: parseInt(storeCategoryId) }),
+      },
+    });
+
+    res.json({
+      data: updatedStore,
+      message: "Tienda actualizada correctamente",
+    });
+  } catch (error) {
+    next(error);
+  }
+};

@@ -8,16 +8,24 @@ import {
   restoreStore,
   getStoresPublic,
   getStorePublicById,
+  getMyStore,
+  createMyStore,
+  updateMyStore,
 } from "./tiendas.controller.js";
-import { protect, IsAdmin } from "../../middlewares/authMiddleware.js";
+import { protect, IsAdmin, isGrocer, attachStore } from "../../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-// Rutas publicas
+// Rutas públicas
 router.get("/public", getStoresPublic);
 router.get("/public/:id", getStorePublicById);
 
-// Rutas privadas
+// Rutas del tendero (su propia tienda)
+router.get("/me", protect, isGrocer, getMyStore);
+router.post("/me", protect, isGrocer, createMyStore);
+router.put("/me", protect, isGrocer, updateMyStore);
+
+// Rutas admin
 router.get("/", protect, IsAdmin, getStores);
 router.get("/:id", protect, IsAdmin, getStoreById);
 router.post("/", protect, IsAdmin, createStore);

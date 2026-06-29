@@ -13,18 +13,20 @@ export const authUser = async (req, res, next) => {
         id: true,
         name: true,
         email: true,
-        roleId: true,
         password: true,
+        roleId: true,
+        role: { select: { name: true } },
       },
     });
+
     if (user && (await bcrypt.compare(password, user.password))) {
       generateToken(res, user.id);
-
       res.json({
         id: user.id,
         name: user.name,
         email: user.email,
         roleId: user.roleId,
+        role: user.role.name,
       });
     } else {
       res.status(401);
@@ -59,6 +61,7 @@ export const registerUser = async (req, res, next) => {
         status: UserStatus.Active,
         roleId: rol.id,
       },
+      include: { role: { select: { name: true } } },
     });
 
     if (user) {
@@ -68,6 +71,7 @@ export const registerUser = async (req, res, next) => {
         name: user.name,
         email: user.email,
         roleId: user.roleId,
+        role: user.role.name,
       });
     } else {
       res.status(400);
@@ -91,8 +95,10 @@ export const logoutUser = (req, res) => {
 export const getUserProfile = async (req, res, next) => {
   try {
     const id = req.user.id;
-    const user = await prisma.user.findUnique({ where: { id } });
-    console.log(user);
+    const user = await prisma.user.findUnique({
+      where: { id },
+      include: { role: { select: { name: true } } },
+    });
 
     if (user) {
       res.json({
@@ -100,6 +106,7 @@ export const getUserProfile = async (req, res, next) => {
         name: user.name,
         email: user.email,
         roleId: user.roleId,
+        role: user.role.name, // "Admin" | "Grocer"
       });
     } else {
       res.status(404);
