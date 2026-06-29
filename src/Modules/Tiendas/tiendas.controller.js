@@ -452,11 +452,11 @@ export const getMyStore = async (req, res, next) => {
   }
 };
 
-export const createMyStore = async (req, res, next) => {
+export const createStore = async (req, res, next) => {
   try {
-    const { name, address, neighborhood, longitude, latitude, description, phone, photo, storeCategoryId } = req.body;
+    const { name, address, neighborhood, longitude, latitude, description, phone, photo, storeCategoryId, userId } = req.body;
 
-    verifyFields({ name, address, neighborhood });
+    verifyFields({ name, address });
 
     if (!storeCategoryId || isNaN(storeCategoryId)) {
       const error = new Error("La categoría de tienda es obligatoria");
@@ -464,20 +464,29 @@ export const createMyStore = async (req, res, next) => {
       throw error;
     }
 
-    const storeCategory = await prisma.storeCategory.findUnique({
-      where: { id: parseInt(storeCategoryId) },
-    });
+    if (!userId || isNaN(userId)) {
+      const error = new Error("El usuario propietario es obligatorio");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      const error = new Error("El usuario propietario no existe");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    const storeCategory = await prisma.storeCategory.findUnique({ where: { id: storeCategoryId } });
     if (!storeCategory) {
       const error = new Error("La categoría de tienda no existe");
       error.statusCode = 404;
       throw error;
     }
 
-    const existingStore = await prisma.store.findFirst({
-      where: { userId: req.user.id },
-    });
+    const existingStore = await prisma.store.findFirst({ where: { userId } });
     if (existingStore) {
-      const error = new Error("Ya tienes una tienda registrada");
+      const error = new Error("Ese usuario ya tiene una tienda asociada");
       error.statusCode = 400;
       throw error;
     }
@@ -487,47 +496,42 @@ export const createMyStore = async (req, res, next) => {
         name,
         address,
         neighborhood,
-        longitude: longitude ? parseFloat(longitude) : 0,
-        latitude: latitude ? parseFloat(latitude) : 0,
+        longitude,
+        latitude,
         description,
         phone,
         photo,
-        userId: req.user.id,
-        storeCategoryId: parseInt(storeCategoryId),
-        status: StoreStatus.Pending,
+        storeCategoryId,
+        userId,
+        status: StoreStatus.Active,
         onboardingStep: "completed",
       },
     });
 
-    res.status(201).json({
-      data: createdStore,
-      message: "Tienda registrada correctamente, está pendiente de aprobación",
-    });
+    res.status(201).json({ data: createdStore, message: "Tienda creada correctamente" });
   } catch (error) {
     next(error);
   }
 };
 
-export const updateMyStore = async (req, res, next) => {
+export const updateStore = async (req, res, next) => {
   try {
-    const store = await prisma.store.findFirst({
-      where: { userId: req.user.id },
-    });
+    const id = parseInt(req.params.id);
+    verifyNumberID(id);
 
+    const { name, address, neighborhood, longitude, latitude, description, phone, photo, storeCategoryId } = req.body;
+
+    verifyFields({ name, address });
+
+    const store = await prisma.store.findUnique({ where: { id } });
     if (!store) {
-      const error = new Error("No tienes una tienda registrada");
+      const error = new Error("Tienda no encontrada");
       error.statusCode = 404;
       throw error;
     }
 
-    const { name, address, neighborhood, longitude, latitude, description, phone, photo, storeCategoryId } = req.body;
-
-    verifyFields({ name, address, neighborhood });
-
     if (storeCategoryId) {
-      const storeCategory = await prisma.storeCategory.findUnique({
-        where: { id: parseInt(storeCategoryId) },
-      });
+      const storeCategory = await prisma.storeCategory.findUnique({ where: { id: storeCategoryId } });
       if (!storeCategory) {
         const error = new Error("La categoría de tienda no existe");
         error.statusCode = 404;
@@ -536,24 +540,11 @@ export const updateMyStore = async (req, res, next) => {
     }
 
     const updatedStore = await prisma.store.update({
-      where: { id: store.id },
-      data: {
-        name,
-        address,
-        neighborhood,
-        longitude: longitude ? parseFloat(longitude) : store.longitude,
-        latitude: latitude ? parseFloat(latitude) : store.latitude,
-        description,
-        phone,
-        photo,
-        ...(storeCategoryId && { storeCategoryId: parseInt(storeCategoryId) }),
-      },
+      where: { id },
+      data: { name, address, neighborhood, longitude, latitude, description, phone, photo, storeCategoryId },
     });
 
-    res.json({
-      data: updatedStore,
-      message: "Tienda actualizada correctamente",
-    });
+    res.json({ data: updatedStore, message: "Tienda editada exitosamente" });
   } catch (error) {
     next(error);
   }
