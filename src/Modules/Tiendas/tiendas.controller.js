@@ -47,18 +47,8 @@ export const getStoresPublic = async (req, res, next) => {
     const { name, neighborhood, storeCategoryId, openNow } = req.query;
 
     // Hora colombiana
-    const now = new Date(
-      new Date().toLocaleString("en-US", { timeZone: "America/Bogota" }),
-    );
-    const weekDays = [
-      "Sunday",
-      "Monday",
-      "Tuesday",
-      "Wednesday",
-      "Thursday",
-      "Friday",
-      "Saturday",
-    ];
+    const now = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Bogota" }));
+    const weekDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     const currentDay = weekDays[now.getDay()];
     const currentTime = new Date();
     currentTime.setFullYear(1970, 0, 1); // Prisma guarda Time con fecha base 1970
@@ -215,19 +205,11 @@ export const getStoreById = async (req, res, next) => {
   }
 };
 
-export const createStore = async (req, res, next) => {
+export const createMyStore = async (req, res, next) => {
   try {
-    const {
-      name,
-      address,
-      longitude,
-      latitude,
-      description,
-      phone,
-      storeCategoryId,
-      userId,
-    } = req.body;
-    verifyFields({ name, address });
+    const { name, address, neighborhood, longitude, latitude, description, phone, photo, storeCategoryId } = req.body;
+
+    verifyFields({ name, address, neighborhood });
 
     if (!storeCategoryId || isNaN(storeCategoryId)) {
       const error = new Error("La categoría de tienda es obligatoria");
@@ -235,21 +217,8 @@ export const createStore = async (req, res, next) => {
       throw error;
     }
 
-    if (!userId || isNaN(userId)) {
-      const error = new Error("El usuario propietario es obligatorio");
-      error.statusCode = 400;
-      throw error;
-    }
-
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) {
-      const error = new Error("El usuario propietario no existe");
-      error.statusCode = 404;
-      throw error;
-    }
-
     const storeCategory = await prisma.storeCategory.findUnique({
-      where: { id: storeCategoryId },
+      where: { id: parseInt(storeCategoryId) },
     });
     if (!storeCategory) {
       const error = new Error("La categoría de tienda no existe");
@@ -258,10 +227,10 @@ export const createStore = async (req, res, next) => {
     }
 
     const existingStore = await prisma.store.findFirst({
-      where: { userId },
+      where: { userId: req.user.id },
     });
     if (existingStore) {
-      const error = new Error("Ese usuario ya tiene una tienda asociada");
+      const error = new Error("Ya tienes una tienda registrada");
       error.statusCode = 400;
       throw error;
     }
@@ -270,52 +239,66 @@ export const createStore = async (req, res, next) => {
       data: {
         name,
         address,
-        longitude,
-        latitude,
+        neighborhood,
+        longitude: longitude ? parseFloat(longitude) : 0,
+        latitude: latitude ? parseFloat(latitude) : 0,
         description,
         phone,
-        storeCategoryId,
-        userId,
-        status: StoreStatus.Active,
+        photo,
+        userId: req.user.id,
+        storeCategoryId: parseInt(storeCategoryId),
+        status: StoreStatus.Pending,
         onboardingStep: "completed",
+      },
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        eventActionType: "CREATE",
+        userId: req.user.id,
+        clientIp: req.ip ?? "unknown",
+        resourceType: "Store",
+        resourceId: createdStore.id,
+        newValue: JSON.stringify({
+          name: createdStore.name,
+          address: createdStore.address,
+          neighborhood: createdStore.neighborhood,
+          phone: createdStore.phone,
+          storeCategoryId: createdStore.storeCategoryId,
+        }),
+        description: "Tienda registrada por el propietario",
+        status: "Active",
       },
     });
 
     res.status(201).json({
       data: createdStore,
-      message: "Tienda creada correctamente",
+      message: "Tienda registrada correctamente, está pendiente de aprobación",
     });
   } catch (error) {
     next(error);
   }
 };
 
-export const updateStore = async (req, res, next) => {
+export const updateMyStore = async (req, res, next) => {
   try {
-    const id = parseInt(req.params.id);
-    verifyNumberID(id);
+    const store = await prisma.store.findFirst({
+      where: { userId: req.user.id },
+    });
 
-    const {
-      name,
-      address,
-      longitude,
-      latitude,
-      description,
-      phone,
-      storeCategoryId,
-    } = req.body;
-    verifyFields({ name, address });
-
-    const store = await prisma.store.findUnique({ where: { id } });
     if (!store) {
-      const error = new Error("Tienda no encontrada");
+      const error = new Error("No tienes una tienda registrada");
       error.statusCode = 404;
       throw error;
     }
 
+    const { name, address, neighborhood, longitude, latitude, description, phone, photo, storeCategoryId } = req.body;
+
+    verifyFields({ name, address, neighborhood });
+
     if (storeCategoryId) {
       const storeCategory = await prisma.storeCategory.findUnique({
-        where: { id: storeCategoryId },
+        where: { id: parseInt(storeCategoryId) },
       });
       if (!storeCategory) {
         const error = new Error("La categoría de tienda no existe");
@@ -324,22 +307,60 @@ export const updateStore = async (req, res, next) => {
       }
     }
 
+    const previousValue = {
+      name: store.name,
+      address: store.address,
+      neighborhood: store.neighborhood,
+      longitude: store.longitude,
+      latitude: store.latitude,
+      description: store.description,
+      phone: store.phone,
+      photo: store.photo,
+      storeCategoryId: store.storeCategoryId,
+    };
+
     const updatedStore = await prisma.store.update({
-      where: { id },
+      where: { id: store.id },
       data: {
         name,
         address,
-        longitude,
-        latitude,
+        neighborhood,
+        longitude: longitude ? parseFloat(longitude) : store.longitude,
+        latitude: latitude ? parseFloat(latitude) : store.latitude,
         description,
         phone,
-        storeCategoryId,
+        photo,
+        ...(storeCategoryId && { storeCategoryId: parseInt(storeCategoryId) }),
       },
     });
 
-    res.status(200).json({
+    await prisma.auditLog.create({
+      data: {
+        eventActionType: "UPDATE",
+        userId: req.user.id,
+        clientIp: req.ip ?? "unknown",
+        resourceType: "Store",
+        resourceId: store.id,
+        previousValue: JSON.stringify(previousValue),
+        newValue: JSON.stringify({
+          name: updatedStore.name,
+          address: updatedStore.address,
+          neighborhood: updatedStore.neighborhood,
+          longitude: updatedStore.longitude,
+          latitude: updatedStore.latitude,
+          description: updatedStore.description,
+          phone: updatedStore.phone,
+          photo: updatedStore.photo,
+          storeCategoryId: updatedStore.storeCategoryId,
+        }),
+        description: "Perfil de tienda actualizado por el propietario",
+        status: "Active",
+      },
+    });
+
+    res.json({
       data: updatedStore,
-      message: "Tienda editada exitosamente",
+      message: "Tienda actualizada correctamente",
     });
   } catch (error) {
     next(error);
