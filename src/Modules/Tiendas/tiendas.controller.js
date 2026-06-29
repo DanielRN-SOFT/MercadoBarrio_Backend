@@ -126,6 +126,8 @@ export const getStorePublicById = async (req, res, next) => {
         photo: true,
         phone: true,
         status: true,
+        latitude: true,
+        longitude: true,
         storeCategory: {
           select: { id: true, name: true },
         },
