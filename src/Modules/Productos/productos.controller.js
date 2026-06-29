@@ -280,3 +280,48 @@ export const restoreProduct = async (req, res, next) => {
     next(error);
   }
 };
+
+export const searchProductsPublic = async (req, res, next) => {
+  try {
+    const { name, productCategoryId } = req.query;
+
+    const products = await prisma.product.findMany({
+      where: {
+        status: "Active",
+        currentStock: { gt: 0 },
+        ...(name && { name: { contains: name } }),
+        ...(productCategoryId && {
+          productCategoryId: parseInt(productCategoryId),
+        }),
+        store: { status: "Active" },
+      },
+      select: {
+        id: true,
+        name: true,
+        price: true,
+        photo: true,
+        currentStock: true,
+        lowStockThreshold: true,
+        unitOfMeasure: { select: { name: true } },
+        productCategory: { select: { id: true, name: true } },
+        store: {
+          select: {
+            id: true,
+            name: true,
+            address: true,
+            neighborhood: true,
+            phone: true,
+            logo: true,
+            latitude: true,
+            longitude: true,
+          },
+        },
+      },
+      orderBy: { name: "asc" },
+    });
+
+    res.json({ data: products, meta: { total: products.length } });
+  } catch (error) {
+    next(error);
+  }
+};
