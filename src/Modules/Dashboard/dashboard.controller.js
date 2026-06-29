@@ -13,10 +13,9 @@ const getLast30Days = () => {
   return days;
 };
 
-const formatDate = (date) => date.toISOString().slice(0, 10); // "YYYY-MM-DD"
+const formatDate = (date) => date.toISOString().slice(0, 10);
 
 // ─── Admin Dashboard ──────────────────────────────────────────────────────────
-// GET /api/dashboard/admin
 export const getAdminDashboard = async (req, res) => {
   try {
     const now = new Date();
@@ -113,11 +112,11 @@ export const getAdminDashboard = async (req, res) => {
         },
         stores: {
           total: totalStores,
-          active: storesStatusMap["Active"] ?? 0,
-          inactive: storesStatusMap["Inactive"] ?? 0,
-          pending: storesStatusMap["Pending"] ?? 0,
-          incomplete: storesStatusMap["Incomplete"] ?? 0,
-          rejected: storesStatusMap["Rejected"] ?? 0,
+          active: storesStatusMap["Activo"] ?? 0,
+          inactive: storesStatusMap["Inactivo"] ?? 0,
+          pending: storesStatusMap["Pendiente"] ?? 0,
+          incomplete: storesStatusMap["Incompleto"] ?? 0,
+          rejected: storesStatusMap["Rechazado"] ?? 0,
         },
         products: { total: totalProducts, lowStock: lowStockProducts },
         suppliers: { active: totalSuppliers },
@@ -250,11 +249,9 @@ export const getAdminCharts = async (req, res) => {
 };
 
 // ─── Tendero Dashboard ────────────────────────────────────────────────────────
-// GET /api/dashboard/store
-// req.store.id viene de attachStore middleware
 export const getStoreDashboard = async (req, res) => {
   try {
-    const storeId = req.store.id; // ← inyectado por attachStore
+    const storeId = req.store.id;
 
     const store = await prisma.store.findUnique({
       where: { id: storeId },
@@ -457,11 +454,9 @@ export const getStoreDashboard = async (req, res) => {
 };
 
 // ─── Tendero Charts ───────────────────────────────────────────────────────────
-// GET /api/dashboard/store/charts
-// req.store.id viene de attachStore middleware
 export const getStoreCharts = async (req, res) => {
   try {
-    const storeId = req.store.id; // ← inyectado por attachStore
+    const storeId = req.store.id;
 
     const now = new Date();
     const days = getLast30Days();
