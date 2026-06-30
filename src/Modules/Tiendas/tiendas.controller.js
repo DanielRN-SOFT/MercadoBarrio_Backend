@@ -47,8 +47,18 @@ export const getStoresPublic = async (req, res, next) => {
     const { name, neighborhood, storeCategoryId, openNow } = req.query;
 
     // Hora colombiana
-    const now = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Bogota" }));
-    const weekDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const now = new Date(
+      new Date().toLocaleString("en-US", { timeZone: "America/Bogota" }),
+    );
+    const weekDays = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ];
     const currentDay = weekDays[now.getDay()];
     const currentTime = new Date();
     currentTime.setFullYear(1970, 0, 1); // Prisma guarda Time con fecha base 1970
@@ -114,60 +124,97 @@ export const getStorePublicById = async (req, res, next) => {
     const id = parseInt(req.params.id);
     verifyNumberID(id);
 
-    const store = await prisma.store.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        name: true,
-        address: true,
-        neighborhood: true,
-        description: true,
-        logo: true,
-        photo: true,
-        phone: true,
-        status: true,
-        latitude: true,
-        longitude: true,
-        storeCategory: {
-          select: { id: true, name: true },
-        },
-        schedules: {
-          select: {
-            id: true,
-            weekDay: true,
-            startTime: true,
-            endTime: true,
-            status: true,
-          },
-        },
-        products: {
-          where: { status: "Active" },
-          select: {
-            id: true,
-            name: true,
-            price: true,
-            description: true,
-            photo: true,
-            currentStock: true,
-            lowStockThreshold: true,
-            referenceCode: true,
-            productCategory: {
-              select: { id: true, name: true },
-            },
-            unitOfMeasure: {
-              select: { id: true, name: true },
-            },
-          },
-        },
-      },
-    });
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(process.env.PAGINATION_LIMIT) || 10;
+    const skip = (page - 1) * limit;
+    const { productCategoryId } = req.query;
 
-    if (store) {
-      res.json({ data: store });
-    } else {
+    const productsWhere = {
+      storeId: id,
+      status: "Active",
+      ...(productCategoryId && {
+        productCategoryId: parseInt(productCategoryId),
+      }),
+    };
+
+    const [store, total, products, categories] = await Promise.all([
+      prisma.store.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          name: true,
+          address: true,
+          neighborhood: true,
+          description: true,
+          logo: true,
+          photo: true,
+          phone: true,
+          status: true,
+          latitude: true,
+          longitude: true,
+          storeCategory: {
+            select: { id: true, name: true },
+          },
+          schedules: {
+            select: {
+              id: true,
+              weekDay: true,
+              startTime: true,
+              endTime: true,
+              status: true,
+            },
+          },
+        },
+      }),
+      prisma.product.count({ where: productsWhere }),
+      prisma.product.findMany({
+        where: productsWhere,
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          name: true,
+          price: true,
+          description: true,
+          photo: true,
+          currentStock: true,
+          lowStockThreshold: true,
+          referenceCode: true,
+          productCategory: {
+            select: { id: true, name: true },
+          },
+          unitOfMeasure: {
+            select: { id: true, name: true },
+          },
+        },
+      }),
+      // Categorías disponibles (sin filtrar por categoría, para los botones)
+      prisma.product.findMany({
+        where: { storeId: id, status: "Active" },
+        select: {
+          productCategory: { select: { id: true, name: true } },
+        },
+        distinct: ["productCategoryId"],
+      }),
+    ]);
+
+    if (!store) {
       res.status(404);
       throw new Error("Tienda no encontrada");
     }
+
+    res.json({
+      data: {
+        ...store,
+        products,
+        categories: categories.map((c) => c.productCategory),
+      },
+      meta: {
+        total,
+        page,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
     next(error);
   }
@@ -209,7 +256,17 @@ export const getStoreById = async (req, res, next) => {
 
 export const createMyStore = async (req, res, next) => {
   try {
-    const { name, address, neighborhood, longitude, latitude, description, phone, photo, storeCategoryId } = req.body;
+    const {
+      name,
+      address,
+      neighborhood,
+      longitude,
+      latitude,
+      description,
+      phone,
+      photo,
+      storeCategoryId,
+    } = req.body;
 
     verifyFields({ name, address, neighborhood });
 
@@ -294,7 +351,17 @@ export const updateMyStore = async (req, res, next) => {
       throw error;
     }
 
-    const { name, address, neighborhood, longitude, latitude, description, phone, photo, storeCategoryId } = req.body;
+    const {
+      name,
+      address,
+      neighborhood,
+      longitude,
+      latitude,
+      description,
+      phone,
+      photo,
+      storeCategoryId,
+    } = req.body;
 
     verifyFields({ name, address, neighborhood });
 
@@ -456,7 +523,18 @@ export const getMyStore = async (req, res, next) => {
 
 export const createStore = async (req, res, next) => {
   try {
-    const { name, address, neighborhood, longitude, latitude, description, phone, photo, storeCategoryId, userId } = req.body;
+    const {
+      name,
+      address,
+      neighborhood,
+      longitude,
+      latitude,
+      description,
+      phone,
+      photo,
+      storeCategoryId,
+      userId,
+    } = req.body;
 
     verifyFields({ name, address });
 
@@ -479,7 +557,9 @@ export const createStore = async (req, res, next) => {
       throw error;
     }
 
-    const storeCategory = await prisma.storeCategory.findUnique({ where: { id: storeCategoryId } });
+    const storeCategory = await prisma.storeCategory.findUnique({
+      where: { id: storeCategoryId },
+    });
     if (!storeCategory) {
       const error = new Error("La categoría de tienda no existe");
       error.statusCode = 404;
@@ -510,7 +590,9 @@ export const createStore = async (req, res, next) => {
       },
     });
 
-    res.status(201).json({ data: createdStore, message: "Tienda creada correctamente" });
+    res
+      .status(201)
+      .json({ data: createdStore, message: "Tienda creada correctamente" });
   } catch (error) {
     next(error);
   }
@@ -521,7 +603,17 @@ export const updateStore = async (req, res, next) => {
     const id = parseInt(req.params.id);
     verifyNumberID(id);
 
-    const { name, address, neighborhood, longitude, latitude, description, phone, photo, storeCategoryId } = req.body;
+    const {
+      name,
+      address,
+      neighborhood,
+      longitude,
+      latitude,
+      description,
+      phone,
+      photo,
+      storeCategoryId,
+    } = req.body;
 
     verifyFields({ name, address });
 
@@ -533,7 +625,9 @@ export const updateStore = async (req, res, next) => {
     }
 
     if (storeCategoryId) {
-      const storeCategory = await prisma.storeCategory.findUnique({ where: { id: storeCategoryId } });
+      const storeCategory = await prisma.storeCategory.findUnique({
+        where: { id: storeCategoryId },
+      });
       if (!storeCategory) {
         const error = new Error("La categoría de tienda no existe");
         error.statusCode = 404;
@@ -543,7 +637,17 @@ export const updateStore = async (req, res, next) => {
 
     const updatedStore = await prisma.store.update({
       where: { id },
-      data: { name, address, neighborhood, longitude, latitude, description, phone, photo, storeCategoryId },
+      data: {
+        name,
+        address,
+        neighborhood,
+        longitude,
+        latitude,
+        description,
+        phone,
+        photo,
+        storeCategoryId,
+      },
     });
 
     res.json({ data: updatedStore, message: "Tienda editada exitosamente" });
