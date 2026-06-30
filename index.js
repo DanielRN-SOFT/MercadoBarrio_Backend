@@ -16,6 +16,7 @@ import storeRouter from "./src/Modules/Tiendas/tiendas.routes.js";
 import productRouter from "./src/Modules/Productos/productos.routes.js";
 import saleRouter from "./src/Modules/Ventas/ventas.routes.js";
 import saleDetailRouter from "./src/Modules/DetalleVenta/detalleventa.routes.js";
+import dashboardRouter from "./src/Modules/Dashboard/dashboard.routes.js";
 
 // Config
 const port = process.env.PORT || 5000;
@@ -29,6 +30,7 @@ app.use(cookieParser());
 
 // Rutas
 app.use("/api/auth", authRouter);
+app.use("/api/dashboard", dashboardRouter);
 app.use("/api/users", userRouter);
 app.use("/api/roles", roleRouter);
 app.use("/api/product-categories", productCategoryRouter);
