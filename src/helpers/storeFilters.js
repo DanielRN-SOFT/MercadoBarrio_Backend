@@ -51,4 +51,13 @@ export const storeSelect = {
   logo: true,
   photo: true,
   storeCategory: { select: { id: true, name: true } },
+  schedules: {
+    select: {
+      id: true,
+      weekDay: true,
+      startTime: true,
+      endTime: true,
+      status: true,
+    },
+  },
 };
