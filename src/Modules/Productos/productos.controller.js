@@ -13,7 +13,9 @@ export const getProducts = async (req, res, next) => {
     const where = {
       storeId: req.store.id,
       ...(name && { name: { contains: name } }),
-      ...(productCategoryId && { productCategoryId: parseInt(productCategoryId) }),
+      ...(productCategoryId && {
+        productCategoryId: parseInt(productCategoryId),
+      }),
       ...(status && { status }),
     };
 
@@ -88,8 +90,17 @@ export const getProductById = async (req, res, next) => {
 
 export const createProduct = async (req, res, next) => {
   try {
-    const { name, price, description, referenceCode, lowStockThreshold, photo, currentStock, productCategoryId, unitOfMeasureId } =
-      req.body;
+    const {
+      name,
+      price,
+      description,
+      referenceCode,
+      lowStockThreshold,
+      photo,
+      currentStock,
+      productCategoryId,
+      unitOfMeasureId,
+    } = req.body;
     verifyFields({ name });
 
     if (price === undefined || isNaN(price) || price < 0) {
@@ -164,7 +175,16 @@ export const updateProduct = async (req, res, next) => {
     const id = parseInt(req.params.id);
     verifyNumberID(id);
 
-    const { name, price, description, referenceCode, lowStockThreshold, photo, productCategoryId, unitOfMeasureId } = req.body;
+    const {
+      name,
+      price,
+      description,
+      referenceCode,
+      lowStockThreshold,
+      photo,
+      productCategoryId,
+      unitOfMeasureId,
+    } = req.body;
     verifyFields({ name });
 
     if (price === undefined || isNaN(price) || price < 0) {
@@ -327,44 +347,61 @@ export const restoreProduct = async (req, res, next) => {
 
 export const searchProductsPublic = async (req, res, next) => {
   try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = 20;
+    const skip = (page - 1) * limit;
     const { name, productCategoryId } = req.query;
 
-    const products = await prisma.product.findMany({
-      where: {
-        status: "Active",
-        currentStock: { gt: 0 },
-        ...(name && { name: { contains: name } }),
-        ...(productCategoryId && {
-          productCategoryId: parseInt(productCategoryId),
-        }),
-        store: { status: "Active" },
-      },
-      select: {
-        id: true,
-        name: true,
-        price: true,
-        photo: true,
-        currentStock: true,
-        lowStockThreshold: true,
-        unitOfMeasure: { select: { name: true } },
-        productCategory: { select: { id: true, name: true } },
-        store: {
-          select: {
-            id: true,
-            name: true,
-            address: true,
-            neighborhood: true,
-            phone: true,
-            logo: true,
-            latitude: true,
-            longitude: true,
+    const where = {
+      status: "Active",
+      currentStock: { gt: 0 },
+      ...(name && { name: { contains: name } }),
+      ...(productCategoryId && {
+        productCategoryId: parseInt(productCategoryId),
+      }),
+      store: { status: "Active" },
+    };
+
+    const [products, total] = await Promise.all([
+      prisma.product.findMany({
+        skip,
+        take: limit,
+        where,
+        select: {
+          id: true,
+          name: true,
+          price: true,
+          photo: true,
+          currentStock: true,
+          lowStockThreshold: true,
+          unitOfMeasure: { select: { name: true } },
+          productCategory: { select: { id: true, name: true } },
+          store: {
+            select: {
+              id: true,
+              name: true,
+              address: true,
+              neighborhood: true,
+              phone: true,
+              logo: true,
+              latitude: true,
+              longitude: true,
+            },
           },
         },
-      },
-      orderBy: { name: "asc" },
-    });
+        orderBy: { name: "asc" },
+      }),
+      prisma.product.count({ where }),
+    ]);
 
-    res.json({ data: products, meta: { total: products.length } });
+    res.json({
+      data: products,
+      meta: {
+        total,
+        page,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
     next(error);
   }
