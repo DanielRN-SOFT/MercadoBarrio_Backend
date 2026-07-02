@@ -33,6 +33,7 @@ export const getProducts = async (req, res, next) => {
           lowStockThreshold: true,
           status: true,
           productCategoryId: true,
+          photo: true,
           unitOfMeasureId: true,
           productCategory: {
             select: { id: true, name: true },
