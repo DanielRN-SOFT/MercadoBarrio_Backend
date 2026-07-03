@@ -10,8 +10,10 @@ export const getSales = async (req, res, next) => {
     const limit = parseInt(process.env.PAGINATION_LIMIT) || 10;
     const skip = (page - 1) * limit;
 
-    const { startDate, endDate, minTotal, maxTotal, productId, status } =
+    const { startDate, endDate, minTotal, maxTotal, productId, status, all } =
       req.query;
+
+    const exportAll = all === "true";
 
     const where = { storeId: req.store.id };
 
@@ -39,11 +41,13 @@ export const getSales = async (req, res, next) => {
       where.status = status;
     }
 
+    // Límite de seguridad para exportaciones masivas, evita traer millones de filas por error
+    const EXPORT_HARD_LIMIT = 20000;
+
     const [total, sales] = await Promise.all([
       prisma.sale.count({ where }),
       prisma.sale.findMany({
-        skip,
-        take: limit,
+        ...(exportAll ? { take: EXPORT_HARD_LIMIT } : { skip, take: limit }),
         where,
         orderBy: { date: "desc" },
         select: {

@@ -23,8 +23,8 @@ const port = process.env.PORT || 5000;
 const app = express();
 
 // Middlewares
+app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
 app.use(express.json());
-app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true}));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
