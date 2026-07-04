@@ -9,9 +9,28 @@ export const getStoreCategories = async (req, res, next) => {
     const limit = parseInt(process.env.PAGINATION_LIMIT) || 10;
     const skip = (page - 1) * limit;
 
+    // Filtros opcionales por query params: ?status=Active&search=juan
+    const { status, search } = req.query;
+    const where = {};
+
+    if (status) {
+      // Validar que el valor coincida con el enum, para no pasar basura a Prisma
+      if (!Object.values(StoreCategoryStatus).includes(status)) {
+        const error = new Error("Estado invalido");
+        error.statusCode = 400;
+        throw error;
+      }
+      where.status = status;
+    }
+
+    if (search) {
+      where.OR = [{ name: { contains: search } }];
+    }
+
     const [total, storeCategories] = await Promise.all([
       prisma.storeCategory.count(),
       prisma.storeCategory.findMany({
+        where,
         skip,
         take: limit,
         select: {
