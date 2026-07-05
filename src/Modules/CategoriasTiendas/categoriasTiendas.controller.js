@@ -1,4 +1,7 @@
-import { StoreCategoryStatus } from "../../../generated/prisma/index.js";
+import {
+  StoreCategoryStatus,
+  StoreStatus,
+} from "../../../generated/prisma/index.js";
 import prisma from "../../../prismaClient.js";
 import verifyFields from "../../helpers/verifyStringFields.js";
 import verifyNumberID from "../../helpers/verifyNumberID.js";
@@ -154,7 +157,7 @@ export const deleteStoreCategory = async (req, res, next) => {
     }
 
     const isAssociated = await prisma.store.findFirst({
-      where: { storeCategoryId: id },
+      where: { storeCategoryId: id, status: StoreStatus.Active },
     });
     if (isAssociated) {
       const error = new Error("Esa categoría está asociada a una tienda");

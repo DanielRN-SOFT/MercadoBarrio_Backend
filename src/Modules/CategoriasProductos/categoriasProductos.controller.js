@@ -1,4 +1,8 @@
-import { ProductCategoryStatus } from "../../../generated/prisma/index.js";
+import {
+  ProductCategoryStatus,
+  ProductStatus,
+  StoreStatus,
+} from "../../../generated/prisma/index.js";
 import prisma from "../../../prismaClient.js";
 import verifyFields from "../../helpers/verifyStringFields.js";
 import verifyNumberID from "../../helpers/verifyNumberID.js";
@@ -44,9 +48,9 @@ export const getProductCategoriesWithProducts = async (req, res, next) => {
         status: ProductCategoryStatus.Active,
         products: {
           some: {
-            status: "Active",
+            status: ProductStatus.Active,
             currentStock: { gt: 0 },
-            store: { status: "Active" },
+            store: { status: StoreStatus.Active },
           },
         },
       },
@@ -178,7 +182,7 @@ export const deleteProductCategory = async (req, res, next) => {
     verifyNumberID(id);
 
     const productCategory = await prisma.productCategory.findUnique({
-      where: { id },
+      where: { id, status: ProductStatus.Active },
     });
     if (!productCategory) {
       const error = new Error("Categoria de producto no encontrada");

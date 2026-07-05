@@ -132,7 +132,9 @@ export const deleteRole = async (req, res, next) => {
       throw error;
     }
 
-    const userRole = await prisma.user.findFirst({ where: { roleId: id } });
+    const userRole = await prisma.user.findFirst({
+      where: { roleId: id, status: UserStatus.Active },
+    });
     if (userRole) {
       const error = new Error("Ya existe un usuario asociado a ese rol");
       error.statusCode = 400;

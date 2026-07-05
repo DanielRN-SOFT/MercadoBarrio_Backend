@@ -1,4 +1,7 @@
-import { UnitOfMeasureStatus } from "../../../generated/prisma/index.js";
+import {
+  ProductStatus,
+  UnitOfMeasureStatus,
+} from "../../../generated/prisma/index.js";
 import prisma from "../../../prismaClient.js";
 import verifyFields from "../../helpers/verifyStringFields.js";
 import verifyNumberID from "../../helpers/verifyNumberID.js";
@@ -131,7 +134,7 @@ export const deleteUnitOfMeasure = async (req, res, next) => {
     }
 
     const isAssociated = await prisma.product.findFirst({
-      where: { unitOfMeasureId: id },
+      where: { unitOfMeasureId: id, status: ProductStatus.Active },
     });
     if (isAssociated) {
       const error = new Error(
