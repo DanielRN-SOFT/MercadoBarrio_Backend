@@ -9,7 +9,7 @@ import verifyNumberID from "../../helpers/verifyNumberID.js";
 
 export const getProductCategories = async (req, res, next) => {
   try {
-    const page = req.query.page || 1;
+    const page = parseInt(req.query.page) || 1;
     const limit = parseInt(process.env.PAGINATION_LIMIT) || 10;
     const skip = (page - 1) * limit;
 
@@ -182,7 +182,7 @@ export const deleteProductCategory = async (req, res, next) => {
     verifyNumberID(id);
 
     const productCategory = await prisma.productCategory.findUnique({
-      where: { id, status: ProductStatus.Active },
+      where: { id },
     });
     if (!productCategory) {
       const error = new Error("Categoria de producto no encontrada");
@@ -191,10 +191,15 @@ export const deleteProductCategory = async (req, res, next) => {
     }
 
     const isAssociated = await prisma.product.findFirst({
-      where: { productCategoryId: id },
+      where: {
+        productCategoryId: id,
+        status: ProductStatus.Active,
+      },
     });
     if (isAssociated) {
-      const error = new Error("Esa categoria está asociada a un producto");
+      const error = new Error(
+        "Esa categoria está asociada a un producto activo",
+      );
       error.statusCode = 400;
       throw error;
     }
