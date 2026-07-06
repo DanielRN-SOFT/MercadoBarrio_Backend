@@ -12,9 +12,27 @@ export const getUnitsOfMeasure = async (req, res, next) => {
     const limit = parseInt(process.env.PAGINATION_LIMIT) || 10;
     const skip = (page - 1) * limit;
 
+    // Filtros
+    const where = {};
+    const { search, status } = req.query;
+
+    if (status) {
+      if (!Object.values(UnitOfMeasureStatus).includes(status)) {
+        const error = new Error("Estado invalido");
+        error.statusCode = 400;
+        throw error;
+      }
+      where.status = status;
+    }
+
+    if (search) {
+      where.OR = [{ name: { contains: search } }];
+    }
+
     const [total, unitsOfMeasure] = await Promise.all([
       prisma.unitOfMeasure.count(),
       prisma.unitOfMeasure.findMany({
+        where,
         skip,
         take: limit,
         select: {
@@ -80,6 +98,10 @@ export const createUnitOfMeasure = async (req, res, next) => {
       message: "Unidad de medida creada correctamente",
     });
   } catch (error) {
+    if (error.code === "P2002") {
+      error.statusCode = 409;
+      error.message = "Ese nombre ya está registrado en el sistema";
+    }
     next(error);
   }
 };
@@ -111,6 +133,10 @@ export const updateUnitOfMeasure = async (req, res, next) => {
       message: "Unidad de medida editada exitosamente",
     });
   } catch (error) {
+    if (error.code === "P2002") {
+      error.statusCode = 409;
+      error.message = "Ese nombre ya está registrado en el sistema";
+    }
     if (error.code === "P2002") {
       error.statusCode = 409;
       error.message = "Ese nombre ya está registrado en el sistema";
