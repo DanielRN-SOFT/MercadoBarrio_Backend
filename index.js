@@ -17,6 +17,7 @@ import productRouter from "./src/Modules/Productos/productos.routes.js";
 import saleRouter from "./src/Modules/Ventas/ventas.routes.js";
 import saleDetailRouter from "./src/Modules/DetalleVenta/detalleventa.routes.js";
 import dashboardRouter from "./src/Modules/Dashboard/dashboard.routes.js";
+import supplierRouter from "./src/Modules/Proveedores/proveedores.routes.js";
 
 // Config
 const port = process.env.PORT || 5000;
@@ -42,6 +43,7 @@ app.use("/api/stores", storeRouter);
 app.use("/api/products", productRouter);
 app.use("/api/sales", saleRouter);
 app.use("/api/sale-details", saleDetailRouter);
+app.use("/api/suppliers", supplierRouter)
 app.use(errorHandler);
 
 // Servidor
