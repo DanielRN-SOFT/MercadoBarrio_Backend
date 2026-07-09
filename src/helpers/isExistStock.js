@@ -1,10 +1,10 @@
 import prisma from "../../prismaClient.js";
 
-export default async function isExistStock(products = []) {
+export default async function isExistStock(products = [], storeId, checkStock = true) {
   const productIds = products.map((p) => p.productId);
 
   const stocks = await prisma.product.findMany({
-    where: { id: { in: productIds } },
+    where: { id: { in: productIds }, storeId },
     select: { id: true, name: true, currentStock: true },
   });
 
@@ -15,13 +15,13 @@ export default async function isExistStock(products = []) {
 
     if (!productBD) {
       const error = new Error(
-        `El producto con id ${product.productId} no existe`,
+        `El producto con id ${product.productId} no existe o no pertenece a tu tienda`,
       );
       error.statusCode = 404;
       throw error;
     }
 
-    if (productBD.currentStock - product.quantity < 0) {
+    if (checkStock && productBD.currentStock - product.quantity < 0) {
       const error = new Error(
         `El producto: ${productBD.name} no cuenta con el stock suficiente`,
       );

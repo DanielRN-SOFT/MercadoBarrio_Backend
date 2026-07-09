@@ -5,6 +5,7 @@ generator client {
 
 datasource db {
   provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
 model ProductCategory {
@@ -34,7 +35,7 @@ model MovementDetail {
   productId  Int
   movementId Int
   quantity   Int
-  unitCost   Decimal  @db.Decimal(10, 2)
+  unitCost   Decimal? @db.Decimal(10, 2)
   movement   Movement @relation(fields: [movementId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   product    Product  @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   createdAt  DateTime @default(now()) @db.Timestamp(0)

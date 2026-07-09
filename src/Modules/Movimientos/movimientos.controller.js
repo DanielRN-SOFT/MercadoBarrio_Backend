@@ -34,13 +34,22 @@ export const getMovements = async (req, res, next) => {
           userId: true,
           storeId: true,
           supplierId: true,
-          details: true,
+          details: {
+            select: {
+              id: true,
+              productId: true,
+              quantity: true,
+              unitCost: true,
+              product: { select: { name: true } },
+            },
+          },
           cancellationDate: true,
           supplier: true,
         },
         where: {
           storeId: req.store.id,
         },
+        orderBy: { id: "desc" },
       }),
     ]);
 
@@ -107,12 +116,24 @@ export const createMovements = async (req, res, next) => {
     const isExitType = [MovementType.Exit, MovementType.AdjustExit].includes(
       type,
     );
+    const isAdjustType = [
+      MovementType.AdjustEntry,
+      MovementType.AdjustExit,
+    ].includes(type);
+
+    if (isAdjustType && (!reason || !reason.trim())) {
+      const error = new Error(
+        "El motivo es obligatorio para los ajustes de inventario",
+      );
+      error.statusCode = 400;
+      throw error;
+    }
 
     // Validaciones ANTES de tocar la BD (fail fast)
     isNumberStock(products);
-    if (isExitType) {
-      await isExistStock(products);
-    }
+    // Siempre se valida que los productos existan y sean de la tienda del usuario.
+    // Solo se valida stock suficiente cuando el movimiento resta stock.
+    await isExistStock(products, req.store.id, isExitType);
 
     // Transaccion: si cualquier consulta falla, se revierte todo el bloque
     const movement = await prisma.$transaction(async (tx) => {
@@ -131,12 +152,14 @@ export const createMovements = async (req, res, next) => {
       await Promise.all(
         products.map((product) => {
           const { productId, quantity, unitCost } = product;
+          const hasCost =
+            unitCost !== undefined && unitCost !== null && unitCost !== "";
           return tx.movementDetail.create({
             data: {
               movementId: createdMovement.id,
               productId,
               quantity,
-              unitCost,
+              unitCost: hasCost ? unitCost : null,
             },
           });
         }),
