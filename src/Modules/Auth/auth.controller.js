@@ -13,6 +13,7 @@ export const authUser = async (req, res, next) => {
         id: true,
         name: true,
         email: true,
+        phone: true,
         password: true,
         roleId: true,
         role: { select: { name: true } },
@@ -25,6 +26,7 @@ export const authUser = async (req, res, next) => {
         id: user.id,
         name: user.name,
         email: user.email,
+        phone: user.phone,
         roleId: user.roleId,
         role: user.role.name,
       });
@@ -70,6 +72,7 @@ export const registerUser = async (req, res, next) => {
         id: user.id,
         name: user.name,
         email: user.email,
+        phone: user.phone,
         roleId: user.roleId,
         role: user.role.name,
       });
@@ -105,6 +108,7 @@ export const getUserProfile = async (req, res, next) => {
         id: user.id,
         name: user.name,
         email: user.email,
+        phone: user.phone,
         roleId: user.roleId,
         role: user.role.name, // "Admin" | "Grocer"
       });
@@ -119,24 +123,46 @@ export const getUserProfile = async (req, res, next) => {
 
 export const updateUserProfile = async (req, res, next) => {
   try {
-    const user = await prisma.user.findUnique(req.user.id);
-    if (user) {
-      const updatedUser = await prisma.user.update({
-        nombre: req.body.name || user.name,
-        email: req.body.email || user.email,
-        telefono: req.body.telefono || user.phone,
-      });
-
-      res.json(updatedUser);
-    } else {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      omit: { password: false },
+    });
+    if (!user) {
       res.status(404);
       throw new Error("Usuario no encontrado");
     }
+
+    const data = {
+      name: req.body.name || user.name,
+      email: req.body.email || user.email,
+      phone: req.body.phone || user.phone,
+    };
+
+    console.log(data);
+
+    if (req.body.password && req.body.new_password) {
+      const passwordMatches = await bcrypt.compare(
+        req.body.password,
+        user.password,
+      );
+      if (!passwordMatches) {
+        res.status(400);
+        throw new Error("La contraseña actual no es correcta");
+      }
+      data.password = await bcrypt.hash(req.body.new_password, 10);
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: req.user.id },
+      data,
+    });
+
+    const { password, ...userWithoutPassword } = updatedUser;
+    res.json(userWithoutPassword);
   } catch (error) {
     next(error);
   }
 };
-
 export const forgotPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
@@ -154,7 +180,6 @@ export const forgotPassword = async (req, res, next) => {
         token: generarId(),
       },
     });
-    console.log(user);
     emailForgotPassword({
       name: updatedUser.name,
       email: updatedUser.email,
