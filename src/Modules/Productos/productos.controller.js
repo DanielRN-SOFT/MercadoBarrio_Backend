@@ -236,8 +236,6 @@ export const updateProduct = async (req, res, next) => {
       unitOfMeasureId: product.unitOfMeasureId,
     };
 
-    // currentStock NO se incluye aquí a propósito (RF-15): el stock
-    // solo se modifica mediante movimientos de inventario o ventas.
     const updatedProduct = await prisma.product.update({
       where: { id },
       data: {
@@ -340,6 +338,144 @@ export const restoreProduct = async (req, res, next) => {
     res.json({
       data: restoredProduct,
       message: "Producto restablecido correctamente",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getInventoryStatus = async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(process.env.PAGINATION_LIMIT) || 10;
+    const skip = (page - 1) * limit;
+    const { name, productCategoryId, stockStatus } = req.query;
+
+    const where = {
+      storeId: req.store.id,
+      status: ProductStatus.Active,
+      ...(name && { name: { contains: name } }),
+      ...(productCategoryId && {
+        productCategoryId: parseInt(productCategoryId),
+      }),
+    };
+
+    const products = await prisma.product.findMany({
+      where,
+      select: {
+        id: true,
+        name: true,
+        currentStock: true,
+        lowStockThreshold: true,
+        photo: true,
+        productCategoryId: true,
+        productCategory: { select: { id: true, name: true } },
+      },
+      orderBy: { name: "asc" },
+    });
+
+    const withStockStatus = products.map((product) => {
+      let stockStatus;
+      if (product.currentStock <= 0) {
+        stockStatus = "Agotado";
+      } else if (product.currentStock <= product.lowStockThreshold) {
+        stockStatus = "Critico";
+      } else {
+        stockStatus = "Normal";
+      }
+      return { ...product, stockStatus };
+    });
+
+    const summary = withStockStatus.reduce(
+      (acc, product) => {
+        if (product.stockStatus === "Agotado") acc.agotados += 1;
+        if (product.stockStatus === "Critico") acc.criticos += 1;
+        acc.total += 1;
+        return acc;
+      },
+      { total: 0, criticos: 0, agotados: 0 },
+    );
+
+    const filtered = stockStatus
+      ? withStockStatus.filter((p) => p.stockStatus === stockStatus)
+      : withStockStatus;
+
+    const total = filtered.length;
+    const paginated = filtered.slice(skip, skip + limit);
+
+    res.json({
+      data: paginated,
+      summary,
+      meta: {
+        total,
+        page,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateThresholdByCategory = async (req, res, next) => {
+  try {
+    const { productCategoryId, lowStockThreshold } = req.body;
+
+    if (!productCategoryId || isNaN(productCategoryId)) {
+      const error = new Error("La categoría de producto es obligatoria");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    if (
+      lowStockThreshold === undefined ||
+      isNaN(lowStockThreshold) ||
+      lowStockThreshold < 0
+    ) {
+      const error = new Error("El umbral debe ser un número válido");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const productCategory = await prisma.productCategory.findUnique({
+      where: { id: parseInt(productCategoryId) },
+    });
+    if (!productCategory) {
+      const error = new Error("La categoría de producto no existe");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    const result = await prisma.product.updateMany({
+      where: {
+        storeId: req.store.id,
+        productCategoryId: parseInt(productCategoryId),
+        status: ProductStatus.Active,
+      },
+      data: { lowStockThreshold: parseInt(lowStockThreshold) },
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        eventActionType: "UPDATE",
+        userId: req.user.id,
+        clientIp: req.ip ?? "unknown",
+        resourceType: "Product",
+        resourceId: parseInt(productCategoryId),
+        previousValue: null,
+        newValue: JSON.stringify({
+          productCategoryId: parseInt(productCategoryId),
+          lowStockThreshold: parseInt(lowStockThreshold),
+          affectedProducts: result.count,
+        }),
+        description: "Umbral actualizado por categoría",
+        status: "Active",
+      },
+    });
+
+    res.status(200).json({
+      message: `Umbral actualizado para ${result.count} producto(s) de la categoría`,
+      data: { affectedProducts: result.count },
     });
   } catch (error) {
     next(error);

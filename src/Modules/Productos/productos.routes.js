@@ -7,6 +7,8 @@ import {
   deleteProduct,
   restoreProduct,
   searchProductsPublic,
+  getInventoryStatus,
+  updateThresholdByCategory,
 } from "./productos.controller.js";
 import { attachStore, isGrocer, protect } from "../../middlewares/authMiddleware.js";
 
@@ -16,6 +18,15 @@ const router = express.Router();
 router.get("/public/search", searchProductsPublic);
 
 // Rutas privadas
+router.get("/inventory", protect, isGrocer, attachStore, getInventoryStatus);
+router.put(
+  "/threshold/by-category",
+  protect,
+  isGrocer,
+  attachStore,
+  updateThresholdByCategory,
+);
+
 router.get("/", protect, isGrocer, attachStore, getProducts);
 router.get("/:id", protect, isGrocer, attachStore, getProductById);
 router.post("/", protect, isGrocer, attachStore, createProduct);
