@@ -9,6 +9,8 @@ import {
 } from "./categoriasTiendas.controller.js";
 import { IsAdmin, protect } from "../../middlewares/authMiddleware.js";
 
+// La documentación Swagger de estas rutas vive en ./categoriasTiendas.docs.js
+
 const router = express.Router();
 
 router.get("/", getStoreCategories);

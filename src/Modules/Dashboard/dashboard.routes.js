@@ -12,6 +12,8 @@ import {
   protect,
 } from "../../middlewares/authMiddleware.js";
 
+// La documentación Swagger de estas rutas vive en ./dashboard.docs.js
+
 const router = express.Router();
 
 // ─── Admin ────────────────────────────────────────────────────────────────────
@@ -20,12 +22,6 @@ router.get("/admin/charts", protect, IsAdmin, getAdminCharts);
 
 // ─── Tendero ──────────────────────────────────────────────────────────────────
 router.get("/store", protect, isGrocer, attachStore, getStoreDashboard);
-router.get(
-  "/store/charts",
+router.get("/store/charts", protect, isGrocer, attachStore, getStoreCharts);
 
-  protect,
-  isGrocer,
-  attachStore,
-  getStoreCharts,
-);
 export default router;
