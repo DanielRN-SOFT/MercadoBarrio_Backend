@@ -11,6 +11,9 @@ import {
 } from "./auth.controller.js";
 import { protect } from "../../middlewares/authMiddleware.js";
 
+// La documentación Swagger de estas rutas vive en ./auth.docs.js
+// (mismo módulo, separado para no mezclar lógica con documentación)
+
 const router = express.Router();
 
 router.post("/login", authUser);

@@ -1,4 +1,6 @@
 import express from "express";
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./src/config/swagger.js";
 import cors from "cors";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
@@ -25,7 +27,12 @@ const port = process.env.PORT || 5000;
 const app = express();
 
 // Middlewares
-app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
+app.use(
+  cors({
+    origin: [process.env.FRONTEND_URL, "http://localhost:5000"],
+    credentials: true,
+  }),
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -46,6 +53,7 @@ app.use("/api/products", productRouter);
 app.use("/api/sales", saleRouter);
 app.use("/api/sale-details", saleDetailRouter);
 app.use("/api/suppliers", supplierRouter);
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use(errorHandler);
 
 // Servidor
