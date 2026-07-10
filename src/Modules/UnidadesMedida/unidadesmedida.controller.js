@@ -137,10 +137,6 @@ export const updateUnitOfMeasure = async (req, res, next) => {
       error.statusCode = 409;
       error.message = "Ese nombre ya está registrado en el sistema";
     }
-    if (error.code === "P2002") {
-      error.statusCode = 409;
-      error.message = "Ese nombre ya está registrado en el sistema";
-    }
     next(error);
   }
 };
