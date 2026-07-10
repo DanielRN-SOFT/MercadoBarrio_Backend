@@ -506,12 +506,13 @@ export const createStore = async (req, res, next) => {
       latitude,
       description,
       phone,
-      photo,
       storeCategoryId,
       userId,
     } = req.body;
 
     verifyFields({ name, address });
+
+    const photo = req.file ? `/uploads/stores/${req.file.filename}` : null;
 
     if (!storeCategoryId || isNaN(storeCategoryId)) {
       const error = new Error("La categoría de tienda es obligatoria");
@@ -586,7 +587,6 @@ export const updateStore = async (req, res, next) => {
       latitude,
       description,
       phone,
-      photo,
       storeCategoryId,
     } = req.body;
 
@@ -597,6 +597,12 @@ export const updateStore = async (req, res, next) => {
       const error = new Error("Tienda no encontrada");
       error.statusCode = 404;
       throw error;
+    }
+
+    let photo = store.photo;
+    if (req.file) {
+      deleteFile(store.photo);
+      photo = `/uploads/stores/${req.file.filename}`;
     }
 
     if (storeCategoryId) {
