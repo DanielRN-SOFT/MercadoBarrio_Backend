@@ -11,8 +11,8 @@ import { IsAdmin, protect } from "../../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-router.get("/", getSuppliers);
-router.get("/:id", getSupplierById);
+router.get("/", protect, getSuppliers);
+router.get("/:id", protect, getSupplierById);
 router.post("/", protect, IsAdmin, createSupplier);
 router.put("/:id", protect, IsAdmin, updateSupplier);
 router.put("/delete/:id", protect, IsAdmin, deleteSupplier);
