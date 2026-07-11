@@ -7,6 +7,144 @@ import isExistStock from "../../helpers/isExistStock.js";
 import isNumberStock from "../../helpers/isNumberStock.js";
 import isMyStore from "../../helpers/isMyStore.js";
 
+export const getProductMovementReport = async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    const storeId = req.store.id; // Extraído de manera segura gracias al middleware attachStore
+
+    if (!startDate || !endDate) {
+      return res.status(400).json({
+        message: "Las fechas de inicio (startDate) y fin (endDate) son requeridas.",
+      });
+    }
+
+    // Configurar rangos de fecha en UTC explícito, igual que en getMovements,
+    // para evitar desfases por la zona horaria local del servidor.
+    const start = new Date(`${startDate}T00:00:00.000Z`);
+    const end = new Date(`${endDate}T23:59:59.999Z`);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return res.status(400).json({
+        message: "Las fechas proporcionadas no son válidas.",
+      });
+    }
+
+    if (start > end) {
+      return res.status(400).json({
+        message: "La fecha inicial no puede ser mayor que la fecha final.",
+      });
+    }
+
+    // Consultar todos los movimientos de la tienda en el rango dado que NO estén cancelados
+    const movements = await prisma.movement.findMany({
+      where: {
+        storeId: storeId,
+        status: MovementStatus.Active, // Solo movimientos activos (ignora "Cancelled")
+        date: {
+          gte: start,
+          lte: end,
+        },
+      },
+      include: {
+        details: {
+          include: {
+            product: true,
+          },
+        },
+      },
+    });
+
+    const productMetrics = {};
+
+    // Procesar los movimientos acumulando entradas y salidas usando tu estructura de detalles
+    movements.forEach((movement) => {
+      const type = movement.type;
+
+      movement.details.forEach((detail) => {
+        const product = detail.product;
+        if (!product) return;
+
+        const productId = product.id;
+
+        if (!productMetrics[productId]) {
+          productMetrics[productId] = {
+            id: productId,
+            name: product.name,
+            referenceCode: product.referenceCode || "",
+            currentStock: product.currentStock,
+            lowStockThreshold: product.lowStockThreshold,
+            entradas: 0,
+            salidas: 0,
+            totalMovimientos: 0,
+          };
+        }
+
+        const qty = detail.quantity;
+
+        // Evaluar tipos basándonos en tu MovementType Enum (Entry, Exit, AdjustEntry, AdjustExit)
+        if (type === "Entry" || type === "AdjustEntry") {
+          productMetrics[productId].entradas += qty;
+        } else if (type === "Exit" || type === "AdjustExit") {
+          productMetrics[productId].salidas += qty;
+        }
+
+        productMetrics[productId].totalMovimientos += qty;
+      });
+    });
+
+    const reportList = Object.values(productMetrics).map((product) => {
+      const requiereReabastecimiento = product.currentStock <= product.lowStockThreshold;
+
+      let nivelRotacion = "Baja";
+
+      if (product.salidas >= 100) nivelRotacion = "Alta";
+      else if (product.salidas >= 30) nivelRotacion = "Media";
+
+      const sugerenciaCompra = requiereReabastecimiento ? Math.max(product.salidas - product.currentStock, 0) : 0;
+
+      return {
+        ...product,
+        nivelRotacion,
+        requiereReabastecimiento,
+        sugerenciaCompra,
+      };
+    });
+
+    const totalSalidas = reportList.reduce((acc, product) => acc + product.salidas, 0);
+
+    const reporteCompleto = reportList.map((product) => ({
+      ...product,
+      porcentajeRotacion: totalSalidas === 0 ? 0 : Number(((product.salidas / totalSalidas) * 100).toFixed(2)),
+    }));
+
+    // Ordenar Top 5 para analizar la rotación del negocio basándonos en salidas
+    const mayorRotacion = [...reportList]
+      .filter((p) => p.salidas > 0)
+      .sort((a, b) => b.salidas - a.salidas)
+      .slice(0, 5);
+
+    const menorRotacion = [...reportList].sort((a, b) => a.salidas - b.salidas).slice(0, 5);
+
+    return res.status(200).json({
+      periodo: {
+        startDate: start,
+        endDate: end,
+      },
+      resumenGeneral: {
+        totalProductosConMovimiento: reportList.length,
+        totalUnidadesEntrantes: reportList.reduce((acc, p) => acc + p.entradas, 0),
+        totalUnidadesSalientes: reportList.reduce((acc, p) => acc + p.salidas, 0),
+      },
+      productosMayorRotacion: mayorRotacion,
+      productosMenorRotacion: menorRotacion,
+      reporteCompletoPorProducto: reporteCompleto,
+    });
+  } catch (error) {
+    console.error("Error al generar el reporte de movimientos:", error);
+    return res.status(500).json({ message: "Error interno en el servidor al compilar el reporte." });
+  }
+};
+
 export const getMovements = async (req, res, next) => {
   try {
     const { startDate, endDate, type, productId } = req.query;

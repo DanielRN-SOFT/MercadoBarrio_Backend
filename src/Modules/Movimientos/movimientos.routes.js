@@ -4,14 +4,16 @@ import {
   getMovementById,
   createMovements,
   cancelMovement,
+  getProductMovementReport,
 } from "./movimientos.controller.js";
-import {
-  attachStore,
-  isGrocer,
-  protect,
-} from "../../middlewares/authMiddleware.js";
+import { attachStore, isGrocer, protect } from "../../middlewares/authMiddleware.js";
 
 const router = express.Router();
+
+
+router.get("/reporte-resumen", protect, isGrocer, attachStore, getProductMovementReport);
+
+// Rutas CRUD estándar
 router.get("/", protect, isGrocer, attachStore, getMovements);
 router.get("/:id", protect, isGrocer, attachStore, getMovementById);
 router.post("/", protect, isGrocer, attachStore, createMovements);
