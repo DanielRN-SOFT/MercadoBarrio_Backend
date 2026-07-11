@@ -166,11 +166,37 @@
  *           items:
  *             $ref: '#/components/schemas/SaleDetailInput'
  *
+ *     ProductoEnAlerta:
+ *       type: object
+ *       description: Producto cuyo stock quedó en el umbral de alerta o por debajo tras esta venta (RF-23).
+ *       properties:
+ *         productId:
+ *           type: integer
+ *           example: 12
+ *         name:
+ *           type: string
+ *           example: Arroz Diana 500g
+ *         currentStock:
+ *           type: integer
+ *           example: 3
+ *         lowStockThreshold:
+ *           type: integer
+ *           example: 5
+ *         estado:
+ *           type: string
+ *           enum: [Crítico, Agotado]
+ *           example: Crítico
+ *
  *     CreateSaleResponse:
  *       type: object
  *       properties:
  *         data:
  *           $ref: '#/components/schemas/Sale'
+ *         productosEnAlerta:
+ *           type: array
+ *           description: Lista de productos que quedaron en alerta de stock bajo tras esta venta. Vacío si ninguno quedó en riesgo.
+ *           items:
+ *             $ref: '#/components/schemas/ProductoEnAlerta'
  *         message:
  *           type: string
  *           example: Venta registrada correctamente

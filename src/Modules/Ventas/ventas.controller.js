@@ -10,8 +10,7 @@ export const getSales = async (req, res, next) => {
     const limit = parseInt(process.env.PAGINATION_LIMIT) || 10;
     const skip = (page - 1) * limit;
 
-    const { startDate, endDate, minTotal, maxTotal, productId, status, all } =
-      req.query;
+    const { startDate, endDate, minTotal, maxTotal, productId, status, all } = req.query;
 
     const exportAll = all === "true";
 
@@ -119,28 +118,23 @@ export const createSale = async (req, res, next) => {
     const { date, details } = req.body;
 
     if (!Array.isArray(details) || details.length === 0) {
-      const error = new Error(
-        "La venta debe tener al menos un producto en el detalle",
-      );
+      const error = new Error("La venta debe tener al menos un producto en el detalle");
       error.statusCode = 400;
       throw error;
     }
 
     for (const item of details) {
-      if (
-        !item.productId ||
-        isNaN(item.productId) ||
-        !item.quantity ||
-        isNaN(item.quantity) ||
-        item.quantity <= 0
-      ) {
-        const error = new Error(
-          "Cada producto del detalle debe tener productId y quantity válidos",
-        );
+      if (!item.productId || isNaN(item.productId) || !item.quantity || isNaN(item.quantity) || item.quantity <= 0) {
+        const error = new Error("Cada producto del detalle debe tener productId y quantity válidos");
         error.statusCode = 400;
         throw error;
       }
     }
+
+    // RF-23: acumula aquí los productos que, tras descontar el stock vendido,
+    // quedan en el umbral de alerta o por debajo, para avisarle al propietario
+    // en el momento (no requiere que él vaya a consultarlo aparte, como en RF-18).
+    const productosEnAlerta = [];
 
     const createdSale = await prisma.$transaction(async (tx) => {
       let total = 0;
@@ -152,17 +146,13 @@ export const createSale = async (req, res, next) => {
         });
 
         if (!product) {
-          const error = new Error(
-            `El producto con id ${item.productId} no existe en esta tienda`,
-          );
+          const error = new Error(`El producto con id ${item.productId} no existe en esta tienda`);
           error.statusCode = 404;
           throw error;
         }
 
         if (product.currentStock < item.quantity) {
-          const error = new Error(
-            `Stock insuficiente para el producto "${product.name}"`,
-          );
+          const error = new Error(`Stock insuficiente para el producto "${product.name}"`);
           error.statusCode = 400;
           throw error;
         }
@@ -178,10 +168,21 @@ export const createSale = async (req, res, next) => {
           subtotal,
         });
 
-        await tx.product.update({
+        const updatedProduct = await tx.product.update({
           where: { id: product.id },
           data: { currentStock: { decrement: item.quantity } },
         });
+
+        // Se evalúa el stock YA descontado contra el umbral de ese producto.
+        if (updatedProduct.currentStock <= updatedProduct.lowStockThreshold) {
+          productosEnAlerta.push({
+            productId: updatedProduct.id,
+            name: updatedProduct.name,
+            currentStock: updatedProduct.currentStock,
+            lowStockThreshold: updatedProduct.lowStockThreshold,
+            estado: updatedProduct.currentStock === 0 ? "Agotado" : "Crítico",
+          });
+        }
       }
 
       return tx.sale.create({
@@ -199,6 +200,9 @@ export const createSale = async (req, res, next) => {
 
     res.status(201).json({
       data: createdSale,
+      // RF-23: el frontend usa este arreglo para mostrar la alerta activada
+      // por el sistema en el momento de la venta. Vacío si nada quedó en riesgo.
+      productosEnAlerta,
       message: "Venta registrada correctamente",
     });
   } catch (error) {
@@ -235,12 +239,9 @@ export const cancelSale = async (req, res, next) => {
       throw error;
     }
 
-    const hoursSinceSale =
-      (Date.now() - new Date(sale.date).getTime()) / (1000 * 60 * 60);
+    const hoursSinceSale = (Date.now() - new Date(sale.date).getTime()) / (1000 * 60 * 60);
     if (hoursSinceSale > MAX_CANCEL_HOURS) {
-      const error = new Error(
-        `Solo se pueden cancelar ventas dentro de las ${MAX_CANCEL_HOURS} horas siguientes a su registro`,
-      );
+      const error = new Error(`Solo se pueden cancelar ventas dentro de las ${MAX_CANCEL_HOURS} horas siguientes a su registro`);
       error.statusCode = 400;
       throw error;
     }
