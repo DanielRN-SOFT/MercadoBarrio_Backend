@@ -10,6 +10,11 @@
  * el wrapper { success, data }. Los errores se propagan con next(error)
  * hacia el manejador global, que responde solo con { message }, así que
  * usan un schema de error propio: MovementError.
+ *
+ * Nota: getProductMovementReport es la excepción del módulo: no usa
+ * next(error), maneja sus propios try/catch y responde directamente con
+ * res.status(...).json({ message }). El shape es igual a MovementError,
+ * así que reutiliza el mismo schema.
  */
 
 /**
@@ -215,6 +220,176 @@
  *         message:
  *           type: string
  *           example: Movimiento cancelado correctamente
+ *
+ *     ProductMovementMetrics:
+ *       type: object
+ *       description: >
+ *         Métricas de un producto dentro del rango de fechas consultado.
+ *         Solo incluye productos que tuvieron al menos un movimiento activo
+ *         (no cancelado) en el período.
+ *       properties:
+ *         id:
+ *           type: integer
+ *           example: 5
+ *         name:
+ *           type: string
+ *           example: Arroz 500g
+ *         referenceCode:
+ *           type: string
+ *           example: ARR-500
+ *         currentStock:
+ *           type: integer
+ *           example: 12
+ *         lowStockThreshold:
+ *           type: integer
+ *           example: 5
+ *         entradas:
+ *           type: number
+ *           description: Suma de cantidades de movimientos Entry y AdjustEntry en el período
+ *           example: 50
+ *         salidas:
+ *           type: number
+ *           description: Suma de cantidades de movimientos Exit y AdjustExit en el período
+ *           example: 38
+ *         totalMovimientos:
+ *           type: number
+ *           description: Suma total de unidades movidas (entradas + salidas) en el período
+ *           example: 88
+ *         nivelRotacion:
+ *           type: string
+ *           enum: [Baja, Media, Alta]
+ *           description: "Alta si salidas >= 100, Media si salidas >= 30, Baja en cualquier otro caso"
+ *           example: Media
+ *         requiereReabastecimiento:
+ *           type: boolean
+ *           description: true si currentStock <= lowStockThreshold
+ *           example: false
+ *         sugerenciaCompra:
+ *           type: number
+ *           description: >
+ *             Si requiereReabastecimiento es true, es max(salidas - currentStock, 0);
+ *             de lo contrario es 0.
+ *           example: 0
+ *
+ *     ProductMovementMetricsWithPercentage:
+ *       description: >
+ *         Igual a ProductMovementMetrics, pero incluye el porcentaje que
+ *         representan las salidas de este producto sobre el total de
+ *         salidas del período. Solo aparece en reporteCompletoPorProducto.
+ *       allOf:
+ *         - $ref: '#/components/schemas/ProductMovementMetrics'
+ *         - type: object
+ *           properties:
+ *             porcentajeRotacion:
+ *               type: number
+ *               description: (salidas del producto / total de salidas del período) * 100, redondeado a 2 decimales. 0 si no hubo salidas en el período.
+ *               example: 18.75
+ *
+ *     MovementReportResponse:
+ *       type: object
+ *       properties:
+ *         periodo:
+ *           type: object
+ *           properties:
+ *             startDate:
+ *               type: string
+ *               format: date-time
+ *             endDate:
+ *               type: string
+ *               format: date-time
+ *         resumenGeneral:
+ *           type: object
+ *           properties:
+ *             totalProductosConMovimiento:
+ *               type: integer
+ *               example: 24
+ *             totalUnidadesEntrantes:
+ *               type: number
+ *               example: 320
+ *             totalUnidadesSalientes:
+ *               type: number
+ *               example: 275
+ *         productosMayorRotacion:
+ *           type: array
+ *           description: Top 5 productos con más salidas en el período (salidas > 0), ordenados de mayor a menor
+ *           items:
+ *             $ref: '#/components/schemas/ProductMovementMetrics'
+ *         productosMenorRotacion:
+ *           type: array
+ *           description: Top 5 productos con menos salidas en el período (incluye productos con 0 salidas), ordenados de menor a mayor
+ *           items:
+ *             $ref: '#/components/schemas/ProductMovementMetrics'
+ *         reporteCompletoPorProducto:
+ *           type: array
+ *           description: Listado completo de todos los productos con movimiento en el período, con el porcentaje de rotación incluido
+ *           items:
+ *             $ref: '#/components/schemas/ProductMovementMetricsWithPercentage'
+ */
+
+/**
+ * @swagger
+ * /movements/reporte-resumen:
+ *   get:
+ *     summary: Genera un reporte resumido de rotación de inventario por producto
+ *     description: >
+ *       Analiza todos los movimientos ACTIVOS (no cancelados) de la tienda
+ *       dentro del rango de fechas indicado, y calcula por producto el total
+ *       de entradas, salidas, nivel de rotación (Baja/Media/Alta según las
+ *       salidas), si requiere reabastecimiento (currentStock <=
+ *       lowStockThreshold) y una sugerencia de cantidad a comprar. También
+ *       retorna el Top 5 de productos con mayor y menor rotación, y un
+ *       resumen general del período. Requiere rol de tendero.
+ *     tags: [Movements]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Fecha inicial del rango a analizar (YYYY-MM-DD)
+ *       - in: query
+ *         name: endDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Fecha final del rango a analizar (YYYY-MM-DD)
+ *     responses:
+ *       200:
+ *         description: Reporte generado correctamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MovementReportResponse'
+ *       400:
+ *         description: >
+ *           startDate o endDate no fueron enviados, no son fechas válidas,
+ *           o startDate es mayor que endDate
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MovementError'
+ *       401:
+ *         description: No autorizado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MovementError'
+ *       403:
+ *         description: El usuario no tiene rol de tendero
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MovementError'
+ *       500:
+ *         description: Error interno del servidor al compilar el reporte
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MovementError'
  */
 
 /**

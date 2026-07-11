@@ -10,6 +10,16 @@
  * wrapper { success, data }; los errores se propagan con next(error)
  * hacia el manejador global, que responde con { message }, así que
  * reutiliza un schema de error propio: SaleError.
+ *
+ * Nota importante: los endpoints de LECTURA (getSales, getSalesDetailed,
+ * getSaleById) usan `select` explícito en Prisma, por lo que su forma de
+ * respuesta es "limpia" (sin storeId, con product anidado donde aplica).
+ * En cambio createSale (tx.sale.create con include) y cancelSale
+ * (tx.sale.update sin select/include) devuelven la fila cruda de Prisma:
+ * incluyen storeId, y en el caso de createSale los detalles NO traen el
+ * producto anidado; cancelSale ni siquiera devuelve `details`. Por eso
+ * usan schemas separados (SaleRawWithDetails / SaleRaw / SaleDetailRaw)
+ * en vez de reutilizar Sale/SaleDetail.
  */
 
 /**
@@ -84,6 +94,7 @@
  *
  *     Sale:
  *       type: object
+ *       description: Forma "limpia" de la venta, devuelta por GET /sales/{id} (usa select explícito).
  *       properties:
  *         id:
  *           type: integer
@@ -111,6 +122,79 @@
  *           type: array
  *           items:
  *             $ref: '#/components/schemas/SaleDetail'
+ *
+ *     SaleDetailRaw:
+ *       type: object
+ *       description: >
+ *         Detalle de venta tal como lo devuelve Prisma sin select (usado
+ *         solo en la respuesta de POST /sales). No incluye el producto
+ *         anidado, pero sí el saleId de la fila.
+ *       properties:
+ *         id:
+ *           type: integer
+ *           example: 340
+ *         saleId:
+ *           type: integer
+ *           example: 120
+ *         productId:
+ *           type: integer
+ *           example: 12
+ *         quantity:
+ *           type: number
+ *           example: 3
+ *         unitPrice:
+ *           type: number
+ *           example: 2500
+ *         subtotal:
+ *           type: number
+ *           example: 7500
+ *
+ *     SaleRaw:
+ *       type: object
+ *       description: >
+ *         Fila cruda de Sale devuelta por PUT /sales/cancel/{id} (sin
+ *         select/include). Incluye storeId y NO incluye el arreglo details.
+ *       properties:
+ *         id:
+ *           type: integer
+ *           example: 120
+ *         date:
+ *           type: string
+ *           format: date-time
+ *         total:
+ *           type: number
+ *           example: 45900
+ *         status:
+ *           $ref: '#/components/schemas/SaleStatus'
+ *         userId:
+ *           type: integer
+ *           example: 2
+ *         storeId:
+ *           type: integer
+ *           example: 3
+ *         cancellationReason:
+ *           type: string
+ *           nullable: true
+ *           example: "Cliente se equivocó de producto"
+ *         cancellationDate:
+ *           type: string
+ *           format: date-time
+ *           nullable: true
+ *
+ *     SaleRawWithDetails:
+ *       description: >
+ *         Fila cruda de Sale devuelta por POST /sales (tx.sale.create con
+ *         include: { details: true }). Incluye storeId y su arreglo
+ *         details, pero cada detalle es un SaleDetailRaw (sin product
+ *         anidado).
+ *       allOf:
+ *         - $ref: '#/components/schemas/SaleRaw'
+ *         - type: object
+ *           properties:
+ *             details:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/SaleDetailRaw'
  *
  *     SaleDetailedProductInfo:
  *       type: object
@@ -275,7 +359,7 @@
  *       type: object
  *       properties:
  *         data:
- *           $ref: '#/components/schemas/Sale'
+ *           $ref: '#/components/schemas/SaleRawWithDetails'
  *         productosEnAlerta:
  *           type: array
  *           description: Lista de productos que quedaron en alerta de stock bajo tras esta venta. Vacío si ninguno quedó en riesgo.
@@ -298,7 +382,7 @@
  *       type: object
  *       properties:
  *         data:
- *           $ref: '#/components/schemas/Sale'
+ *           $ref: '#/components/schemas/SaleRaw'
  *         message:
  *           type: string
  *           example: Venta cancelada correctamente
@@ -657,7 +741,10 @@
  *       Valida que cada producto del detalle exista en la tienda y tenga
  *       stock suficiente, calcula el total y descuenta el stock de forma
  *       transaccional. Si falla la validación de cualquier producto, se
- *       revierte toda la venta. Requiere rol de tendero.
+ *       revierte toda la venta. El objeto `data` de la respuesta es la
+ *       fila cruda de Prisma (incluye storeId) y cada detalle NO trae el
+ *       producto anidado, a diferencia de GET /sales/{id}. Requiere rol
+ *       de tendero.
  *     tags: [Sales]
  *     security:
  *       - bearerAuth: []
@@ -717,7 +804,10 @@
  *       Solo permite cancelar ventas dentro de las 24 horas siguientes a
  *       su registro y que no estén ya canceladas. Requiere un motivo de
  *       cancelación. Devuelve el stock de cada producto del detalle de
- *       forma transaccional. Requiere rol de tendero.
+ *       forma transaccional. El objeto `data` de la respuesta es la fila
+ *       cruda de Prisma (incluye storeId) y NO incluye el arreglo
+ *       `details`, a diferencia de GET /sales/{id}. Requiere rol de
+ *       tendero.
  *     tags: [Sales]
  *     security:
  *       - bearerAuth: []

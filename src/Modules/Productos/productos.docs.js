@@ -14,6 +14,12 @@
  * Nota: create y update reciben multipart/form-data porque aceptan un
  * archivo de foto (uploadProductPhoto.single("photo")). Los campos
  * numéricos llegan como string y se parsean en el controller.
+ *
+ * Nota (RF-46): getProductStockTimeline reutiliza los schemas
+ * MovementType, MovementStatus y SaleStatus ya definidos en la
+ * documentación de movimientos y ventas (swagger-jsdoc combina todos los
+ * archivos del array `apis` en un solo spec, así que estos $ref son
+ * válidos aquí sin redefinirlos).
  */
 
 /**
@@ -399,6 +405,156 @@
  *             affectedProducts:
  *               type: integer
  *               example: 12
+ *
+ *     TimelineUserRef:
+ *       type: object
+ *       nullable: true
+ *       properties:
+ *         id:
+ *           type: integer
+ *           example: 2
+ *         name:
+ *           type: string
+ *           example: Juan Pérez
+ *
+ *     TimelineSupplierRef:
+ *       type: object
+ *       nullable: true
+ *       properties:
+ *         id:
+ *           type: integer
+ *           example: 7
+ *         name:
+ *           type: string
+ *           example: Distribuidora ABC
+ *
+ *     TimelineMovementEvent:
+ *       type: object
+ *       description: Evento del timeline que proviene de un Movimiento (entrada, salida o ajuste de inventario)
+ *       properties:
+ *         origen:
+ *           type: string
+ *           enum: [Movimiento]
+ *         id:
+ *           type: integer
+ *           description: ID del movimiento
+ *           example: 34
+ *         date:
+ *           type: string
+ *           format: date-time
+ *         tipo:
+ *           $ref: '#/components/schemas/MovementType'
+ *         signo:
+ *           type: string
+ *           enum: ["+", "-"]
+ *           description: "+ si el tipo es Entry o AdjustEntry, - si es Exit o AdjustExit"
+ *         cantidad:
+ *           type: number
+ *           example: 20
+ *         estado:
+ *           $ref: '#/components/schemas/MovementStatus'
+ *         motivo:
+ *           type: string
+ *           nullable: true
+ *           description: reason del movimiento (obligatorio solo en ajustes)
+ *         unitCost:
+ *           type: number
+ *           nullable: true
+ *         supplier:
+ *           $ref: '#/components/schemas/TimelineSupplierRef'
+ *         usuario:
+ *           $ref: '#/components/schemas/TimelineUserRef'
+ *         cancellationDate:
+ *           type: string
+ *           format: date-time
+ *           nullable: true
+ *
+ *     TimelineSaleEvent:
+ *       type: object
+ *       description: Evento del timeline que proviene de una Venta
+ *       properties:
+ *         origen:
+ *           type: string
+ *           enum: [Venta]
+ *         id:
+ *           type: integer
+ *           description: ID de la venta
+ *           example: 120
+ *         date:
+ *           type: string
+ *           format: date-time
+ *         tipo:
+ *           type: string
+ *           enum: [Venta]
+ *         signo:
+ *           type: string
+ *           enum: ["-"]
+ *           description: Siempre "-", una venta siempre resta stock
+ *         cantidad:
+ *           type: number
+ *           example: 3
+ *         estado:
+ *           $ref: '#/components/schemas/SaleStatus'
+ *         motivo:
+ *           type: string
+ *           nullable: true
+ *           description: cancellationReason de la venta, null si no fue cancelada
+ *         unitPrice:
+ *           type: number
+ *           example: 2500
+ *         subtotal:
+ *           type: number
+ *           example: 7500
+ *         usuario:
+ *           $ref: '#/components/schemas/TimelineUserRef'
+ *         cancellationDate:
+ *           type: string
+ *           format: date-time
+ *           nullable: true
+ *
+ *     TimelineEvent:
+ *       description: >
+ *         Un evento del timeline es un TimelineMovementEvent o un
+ *         TimelineSaleEvent; se distinguen por el campo `origen`. Ambos
+ *         comparten id, date, tipo, signo, cantidad, estado, motivo,
+ *         usuario y cancellationDate, pero solo el de Movimiento trae
+ *         unitCost/supplier, y solo el de Venta trae unitPrice/subtotal.
+ *       oneOf:
+ *         - $ref: '#/components/schemas/TimelineMovementEvent'
+ *         - $ref: '#/components/schemas/TimelineSaleEvent'
+ *
+ *     ProductStockTimelineResponse:
+ *       type: object
+ *       properties:
+ *         data:
+ *           type: array
+ *           description: Eventos (movimientos + ventas) del producto en el rango, ordenados por fecha descendente
+ *           items:
+ *             $ref: '#/components/schemas/TimelineEvent'
+ *         producto:
+ *           type: object
+ *           properties:
+ *             id:
+ *               type: integer
+ *               example: 12
+ *             name:
+ *               type: string
+ *               example: Arroz 500g
+ *             currentStock:
+ *               type: integer
+ *               example: 40
+ *         meta:
+ *           type: object
+ *           properties:
+ *             total:
+ *               type: integer
+ *               example: 37
+ *             page:
+ *               type: integer
+ *               example: 1
+ *             totalPages:
+ *               type: integer
+ *               example: 2
  */
 
 /**
@@ -667,6 +823,94 @@
  *               $ref: '#/components/schemas/ProductError'
  *       404:
  *         description: Producto no encontrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ProductError'
+ *       500:
+ *         description: Error interno del servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ProductError'
+ */
+
+/**
+ * @swagger
+ * /products/{id}/timeline:
+ *   get:
+ *     summary: Obtiene la línea de tiempo consolidada de movimientos y ventas de un producto (RF-46)
+ *     description: >
+ *       Une en un solo arreglo, ordenado por fecha descendente, todo lo
+ *       que afectó el stock del producto: movimientos (entradas, salidas
+ *       y ajustes) y ventas, incluyendo eventos cancelados (se marcan con
+ *       su `estado` y `cancellationDate`, no se excluyen del timeline).
+ *       Cada evento indica su `origen` ("Movimiento" o "Venta"). La
+ *       paginación se aplica sobre el arreglo ya combinado y ordenado, y
+ *       a diferencia de otros listados de este módulo, `limit` es
+ *       controlado por el cliente (no por PAGINATION_LIMIT). Requiere rol
+ *       de tendero.
+ *     tags: [Products]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del producto
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Fecha inicial del rango (YYYY-MM-DD), aplica tanto a movimientos como a ventas
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Fecha final del rango (YYYY-MM-DD), aplica tanto a movimientos como a ventas
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Número de página
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Cantidad de eventos por página
+ *     responses:
+ *       200:
+ *         description: Timeline obtenido correctamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ProductStockTimelineResponse'
+ *       400:
+ *         description: ID de producto inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ProductError'
+ *       401:
+ *         description: No autorizado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ProductError'
+ *       403:
+ *         description: El usuario no tiene rol de tendero
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ProductError'
+ *       404:
+ *         description: Producto no encontrado, o no pertenece a la tienda del usuario
  *         content:
  *           application/json:
  *             schema:
