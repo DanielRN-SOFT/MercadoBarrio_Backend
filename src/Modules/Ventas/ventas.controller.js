@@ -18,12 +18,11 @@ export const getSales = async (req, res, next) => {
 
     if (startDate || endDate) {
       where.date = {};
-      if (startDate) where.date.gte = new Date(startDate);
-      if (endDate) {
-        const end = new Date(endDate);
-        end.setHours(23, 59, 59, 999);
-        where.date.lte = end;
-      }
+      // Fechas en UTC explícito (igual que en Movimientos), para que un
+      // filtro "11/07/2026" cubra ese día completo sin importar la zona
+      // horaria local del servidor.
+      if (startDate) where.date.gte = new Date(`${startDate}T00:00:00.000Z`);
+      if (endDate) where.date.lte = new Date(`${endDate}T23:59:59.999Z`);
     }
 
     if (minTotal || maxTotal) {
@@ -72,10 +71,6 @@ export const getSales = async (req, res, next) => {
   }
 };
 
-// RF-47: mismos filtros que getSales, pero trae el detalle de productos de
-// cada venta (categoría, referencia, unidad) para poder exportar una fila
-// por producto vendido. Es un endpoint aparte para no alterar el contrato
-// de /sales que ya usa la exportación "resumen por venta" (exportSalesToExcel).
 export const getSalesDetailed = async (req, res, next) => {
   try {
     const page = req.query.page || 1;
@@ -90,12 +85,11 @@ export const getSalesDetailed = async (req, res, next) => {
 
     if (startDate || endDate) {
       where.date = {};
-      if (startDate) where.date.gte = new Date(startDate);
-      if (endDate) {
-        const end = new Date(endDate);
-        end.setHours(23, 59, 59, 999);
-        where.date.lte = end;
-      }
+      // Fechas en UTC explícito (igual que en Movimientos), para que un
+      // filtro "11/07/2026" cubra ese día completo sin importar la zona
+      // horaria local del servidor.
+      if (startDate) where.date.gte = new Date(`${startDate}T00:00:00.000Z`);
+      if (endDate) where.date.lte = new Date(`${endDate}T23:59:59.999Z`);
     }
 
     if (minTotal || maxTotal) {
@@ -219,9 +213,7 @@ export const createSale = async (req, res, next) => {
       }
     }
 
-    // RF-23: acumula aquí los productos que, tras descontar el stock vendido,
-    // quedan en el umbral de alerta o por debajo, para avisarle al propietario
-    // en el momento (no requiere que él vaya a consultarlo aparte, como en RF-18).
+
     const productosEnAlerta = [];
 
     const createdSale = await prisma.$transaction(async (tx) => {
@@ -288,8 +280,6 @@ export const createSale = async (req, res, next) => {
 
     res.status(201).json({
       data: createdSale,
-      // RF-23: el frontend usa este arreglo para mostrar la alerta activada
-      // por el sistema en el momento de la venta. Vacío si nada quedó en riesgo.
       productosEnAlerta,
       message: "Venta registrada correctamente",
     });
@@ -369,12 +359,11 @@ export const getSalesReport = async (req, res, next) => {
     const where = { storeId: req.store.id, status: SaleStatus.Completed };
     if (startDate || endDate) {
       where.date = {};
-      if (startDate) where.date.gte = new Date(startDate);
-      if (endDate) {
-        const end = new Date(endDate);
-        end.setHours(23, 59, 59, 999);
-        where.date.lte = end;
-      }
+      // Fechas en UTC explícito (igual que en Movimientos), para que un
+      // filtro "11/07/2026" cubra ese día completo sin importar la zona
+      // horaria local del servidor.
+      if (startDate) where.date.gte = new Date(`${startDate}T00:00:00.000Z`);
+      if (endDate) where.date.lte = new Date(`${endDate}T23:59:59.999Z`);
     }
 
     const sales = await prisma.sale.findMany({
