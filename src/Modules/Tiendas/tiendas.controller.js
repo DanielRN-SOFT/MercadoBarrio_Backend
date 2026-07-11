@@ -27,6 +27,7 @@ export const getStores = async (req, res, next) => {
           photo: true,
           phone: true,
           status: true,
+          isVisible: true,
           storeCategoryId: true,
           userId: true,
         },
@@ -105,8 +106,8 @@ export const getStorePublicById = async (req, res, next) => {
     };
 
     const [store, total, products, categories] = await Promise.all([
-      prisma.store.findUnique({
-        where: { id },
+      prisma.store.findFirst({
+        where: { id, status: "Active", isVisible: true },
         select: {
           id: true,
           name: true,
@@ -206,6 +207,7 @@ export const getStoreById = async (req, res, next) => {
         photo: true,
         phone: true,
         status: true,
+        isVisible: true,
         storeCategoryId: true,
         userId: true,
         onboardingStep: true,
@@ -225,16 +227,7 @@ export const getStoreById = async (req, res, next) => {
 
 export const createMyStore = async (req, res, next) => {
   try {
-    const {
-      name,
-      address,
-      neighborhood,
-      longitude,
-      latitude,
-      description,
-      phone,
-      storeCategoryId,
-    } = req.body;
+    const { name, address, neighborhood, longitude, latitude, description, phone, storeCategoryId } = req.body;
 
     verifyFields({ name, address, neighborhood });
 
@@ -321,16 +314,7 @@ export const updateMyStore = async (req, res, next) => {
       throw error;
     }
 
-    const {
-      name,
-      address,
-      neighborhood,
-      longitude,
-      latitude,
-      description,
-      phone,
-      storeCategoryId,
-    } = req.body;
+    const { name, address, neighborhood, longitude, latitude, description, phone, storeCategoryId } = req.body;
 
     verifyFields({ name, address, neighborhood });
 
@@ -479,6 +463,7 @@ export const getMyStore = async (req, res, next) => {
         photo: true,
         phone: true,
         status: true,
+        isVisible: true,
         storeCategoryId: true,
         onboardingStep: true,
       },
@@ -496,19 +481,84 @@ export const getMyStore = async (req, res, next) => {
   }
 };
 
+// RF-43: el propietario pausa/reactiva la visibilidad de su tienda en el
+// directorio público, sin eliminar ningún dato. Independiente de `status`,
+// que es el campo de moderación controlado por el admin.
+export const updateMyStoreVisibility = async (req, res, next) => {
+  try {
+    const { isVisible } = req.body;
+
+    if (typeof isVisible !== "boolean") {
+      const error = new Error("El campo isVisible es obligatorio y debe ser true o false");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const store = await prisma.store.findUnique({
+      where: { id: req.store.id },
+    });
+
+    if (!store) {
+      const error = new Error("Tienda no encontrada");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    if (store.status === StoreStatus.Pending) {
+      const error = new Error("Tu tienda aún está pendiente de aprobación, no puedes cambiar su visibilidad todavía");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    if (store.status !== StoreStatus.Active) {
+      const error = new Error("Tu tienda no está activa en este momento, contacta a soporte para más información");
+      error.statusCode = 403;
+      throw error;
+    }
+
+    if (store.isVisible === isVisible) {
+      res.json({
+        data: store,
+        message: isVisible ? "Tu tienda ya es visible en el directorio público" : "Tu tienda ya estaba pausada del directorio público",
+      });
+      return;
+    }
+
+    const updatedStore = await prisma.store.update({
+      where: { id: store.id },
+      data: { isVisible },
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        eventActionType: "UPDATE",
+        userId: req.user.id,
+        clientIp: req.ip ?? "unknown",
+        resourceType: "Store",
+        resourceId: store.id,
+        previousValue: JSON.stringify({ isVisible: store.isVisible }),
+        newValue: JSON.stringify({ isVisible: updatedStore.isVisible }),
+        description: isVisible
+          ? "Tienda reactivada en el directorio público por el propietario"
+          : "Tienda pausada del directorio público por el propietario",
+        status: "Active",
+      },
+    });
+
+    res.json({
+      data: updatedStore,
+      message: isVisible
+        ? "Tu tienda ya es visible en el directorio público"
+        : "Tu tienda fue pausada, ya no aparece en el directorio público",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const createStore = async (req, res, next) => {
   try {
-    const {
-      name,
-      address,
-      neighborhood,
-      longitude,
-      latitude,
-      description,
-      phone,
-      storeCategoryId,
-      userId,
-    } = req.body;
+    const { name, address, neighborhood, longitude, latitude, description, phone, storeCategoryId, userId } = req.body;
 
     verifyFields({ name, address });
 
@@ -574,9 +624,7 @@ export const createStore = async (req, res, next) => {
       },
     });
 
-    res
-      .status(201)
-      .json({ data: createdStore, message: "Tienda creada correctamente" });
+    res.status(201).json({ data: createdStore, message: "Tienda creada correctamente" });
   } catch (error) {
     next(error);
   }
@@ -587,16 +635,7 @@ export const updateStore = async (req, res, next) => {
     const id = parseInt(req.params.id);
     verifyNumberID(id);
 
-    const {
-      name,
-      address,
-      neighborhood,
-      longitude,
-      latitude,
-      description,
-      phone,
-      storeCategoryId,
-    } = req.body;
+    const { name, address, neighborhood, longitude, latitude, description, phone, storeCategoryId } = req.body;
 
     verifyFields({ name, address });
 
@@ -614,17 +653,9 @@ export const updateStore = async (req, res, next) => {
     }
 
     // Parseo explícito, con fallback al valor actual si el campo no vino
-    const parsedStoreCategoryId = storeCategoryId
-      ? parseInt(storeCategoryId)
-      : store.storeCategoryId;
-    const parsedLongitude =
-      longitude !== undefined && longitude !== ""
-        ? parseFloat(longitude)
-        : store.longitude;
-    const parsedLatitude =
-      latitude !== undefined && latitude !== ""
-        ? parseFloat(latitude)
-        : store.latitude;
+    const parsedStoreCategoryId = storeCategoryId ? parseInt(storeCategoryId) : store.storeCategoryId;
+    const parsedLongitude = longitude !== undefined && longitude !== "" ? parseFloat(longitude) : store.longitude;
+    const parsedLatitude = latitude !== undefined && latitude !== "" ? parseFloat(latitude) : store.latitude;
 
     if (storeCategoryId) {
       const storeCategory = await prisma.storeCategory.findUnique({

@@ -1,28 +1,14 @@
 // helpers/storeFilters.js
-export const buildStoreWhere = ({
-  name,
-  neighborhood,
-  storeCategoryId,
-  openNow,
-}) => {
-  const now = new Date(
-    new Date().toLocaleString("en-US", { timeZone: "America/Bogota" }),
-  );
-  const weekDays = [
-    "Sunday",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-  ];
+export const buildStoreWhere = ({ name, neighborhood, storeCategoryId, openNow }) => {
+  const now = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Bogota" }));
+  const weekDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const currentDay = weekDays[now.getDay()];
   const currentTime = new Date();
   currentTime.setFullYear(1970, 0, 1);
 
   return {
     status: "Active",
+    isVisible: true,
     ...(name && { name: { contains: name } }),
     ...(neighborhood && { neighborhood: { contains: neighborhood } }),
     ...(storeCategoryId && { storeCategoryId: parseInt(storeCategoryId) }),

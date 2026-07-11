@@ -185,6 +185,7 @@ model Store {
   photo           String?              @db.VarChar(255)
   phone           String?              @db.VarChar(45)
   status          StoreStatus
+  isVisible       Boolean              @default(true) @map("is_visible")
   userId          Int
   storeCategoryId Int
   onboardingStep  String               @db.VarChar(45)

@@ -871,6 +871,77 @@
 
 /**
  * @swagger
+ * /stores/me/visibility:
+ *   patch:
+ *     summary: Pausa o reactiva la visibilidad de la tienda propia en el directorio público
+ *     description: >
+ *       Permite al propietario ocultar temporalmente su tienda del
+ *       directorio público, el mapa y el acceso directo por link, sin
+ *       eliminar ningún dato (RF-43). Es independiente del campo `status`,
+ *       que controla el administrador. Solo puede cambiarse cuando la
+ *       tienda está en estado Active; si está Pending, Inactive,
+ *       Incomplete o Rejected, se rechaza la solicitud. Requiere rol de
+ *       tendero y tener una tienda asociada.
+ *     tags: [Stores]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [isVisible]
+ *             properties:
+ *               isVisible:
+ *                 type: boolean
+ *                 description: true para reactivar, false para pausar
+ *     responses:
+ *       200:
+ *         description: Visibilidad actualizada correctamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: isVisible faltante/no booleano, o la tienda aún está pendiente de aprobación
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/StoreError'
+ *       401:
+ *         description: No autorizado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/StoreError'
+ *       403:
+ *         description: El usuario no tiene rol de tendero, o la tienda no está activa
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/StoreError'
+ *       404:
+ *         description: No tienes una tienda asociada
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/StoreError'
+ *       500:
+ *         description: Error interno del servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/StoreError'
+ */
+
+/**
+ * @swagger
  * /stores:
  *   get:
  *     summary: Obtiene el listado paginado de todas las tiendas del sistema
