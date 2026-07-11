@@ -1,10 +1,7 @@
 import prisma from "../../../prismaClient.js";
 import verifyFields from "../../helpers/verifyStringFields.js";
 import verifyNumberID from "../../helpers/verifyNumberID.js";
-import {
-  MovementStatus,
-  MovementType,
-} from "../../../generated/prisma/index.js";
+import { MovementStatus, MovementType } from "../../../generated/prisma/index.js";
 import getDateNow from "../../helpers/getDateNow.js";
 import isExistStock from "../../helpers/isExistStock.js";
 import isNumberStock from "../../helpers/isNumberStock.js";
@@ -12,45 +9,86 @@ import isMyStore from "../../helpers/isMyStore.js";
 
 export const getMovements = async (req, res, next) => {
   try {
+    const { startDate, endDate, type, productId } = req.query;
+    if (startDate && endDate) {
+      const start = new Date(`${startDate}T00:00:00.000Z`);
+      const end = new Date(`${endDate}T23:59:59.999Z`);
+
+      if (start > end) {
+        const error = new Error("La fecha inicial no puede ser mayor que la fecha final.");
+        error.statusCode = 400;
+        throw error;
+      }
+    }
+    const all = req.query.all === "true";
+
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(process.env.PAGINATION_LIMIT) || 10;
     const skip = (page - 1) * limit;
 
-    const [total, movements] = await Promise.all([
-      prisma.movement.count({
-        where: {
-          storeId: req.store.id,
+    const where = {
+      storeId: req.store.id,
+    };
+
+    if (type && Object.values(MovementType).includes(type)) {
+      where.type = type;
+    }
+
+    if (startDate || endDate) {
+      where.date = {};
+      if (startDate) where.date.gte = new Date(`${startDate}T00:00:00.000Z`);
+      if (endDate) where.date.lte = new Date(`${endDate}T23:59:59.999Z`);
+    }
+
+    if (productId) {
+      where.details = {
+        some: { productId: parseInt(productId) },
+      };
+    }
+
+    const findManyArgs = {
+      select: {
+        id: true,
+        date: true,
+        status: true,
+        type: true,
+        reason: true,
+        userId: true,
+        storeId: true,
+        supplierId: true,
+        details: {
+          select: {
+            id: true,
+            productId: true,
+            quantity: true,
+            unitCost: true,
+            product: { select: { name: true } },
+          },
         },
-      }),
-      prisma.movement.findMany({
-        skip,
-        take: limit,
-        select: {
-          id: true,
-          date: true,
-          status: true,
-          type: true,
-          reason: true,
-          userId: true,
-          storeId: true,
-          supplierId: true,
-          details: true,
-          cancellationDate: true,
-          supplier: true,
-        },
-        where: {
-          storeId: req.store.id,
-        },
-      }),
-    ]);
+        cancellationDate: true,
+        supplier: true,
+      },
+      where,
+      orderBy: { id: "desc" },
+    };
+
+    // Cuando all=true se omite paginacion, pensado para exportar a Excel
+    if (!all) {
+      findManyArgs.skip = skip;
+      findManyArgs.take = limit;
+    }
+
+    const [total, movements] = await Promise.all([prisma.movement.count({ where }), prisma.movement.findMany(findManyArgs)]);
 
     res.json({
       data: movements,
-      meta: {
-        total,
-        page,
-        totalPages: Math.ceil(total / limit),
-      },
+      meta: all
+        ? { total, page: 1, totalPages: 1 }
+        : {
+            total,
+            page,
+            totalPages: Math.ceil(total / limit),
+          },
     });
   } catch (error) {
     next(error);
@@ -104,15 +142,20 @@ export const createMovements = async (req, res, next) => {
       throw error;
     }
 
-    const isExitType = [MovementType.Exit, MovementType.AdjustExit].includes(
-      type,
-    );
+    const isExitType = [MovementType.Exit, MovementType.AdjustExit].includes(type);
+    const isAdjustType = [MovementType.AdjustEntry, MovementType.AdjustExit].includes(type);
+
+    if (isAdjustType && (!reason || !reason.trim())) {
+      const error = new Error("El motivo es obligatorio para los ajustes de inventario");
+      error.statusCode = 400;
+      throw error;
+    }
 
     // Validaciones ANTES de tocar la BD (fail fast)
     isNumberStock(products);
-    if (isExitType) {
-      await isExistStock(products);
-    }
+    // Siempre se valida que los productos existan y sean de la tienda del usuario.
+    // Solo se valida stock suficiente cuando el movimiento resta stock.
+    await isExistStock(products, req.store.id, isExitType);
 
     // Transaccion: si cualquier consulta falla, se revierte todo el bloque
     const movement = await prisma.$transaction(async (tx) => {
@@ -131,12 +174,13 @@ export const createMovements = async (req, res, next) => {
       await Promise.all(
         products.map((product) => {
           const { productId, quantity, unitCost } = product;
+          const hasCost = unitCost !== undefined && unitCost !== null && unitCost !== "";
           return tx.movementDetail.create({
             data: {
               movementId: createdMovement.id,
               productId,
               quantity,
-              unitCost,
+              unitCost: hasCost ? unitCost : null,
             },
           });
         }),
@@ -158,9 +202,7 @@ export const createMovements = async (req, res, next) => {
           });
 
           if (result.count === 0) {
-            const error = new Error(
-              `Stock insuficiente para el producto con id ${product.productId}`,
-            );
+            const error = new Error(`Stock insuficiente para el producto con id ${product.productId}`);
             error.statusCode = 400;
             throw error;
           }
@@ -209,9 +251,7 @@ export const cancelMovement = async (req, res, next) => {
       }
 
       // Revertir el efecto en stock (inverso al que se aplico al crear)
-      const isExit = [MovementType.Exit, MovementType.AdjustExit].includes(
-        movement.type,
-      );
+      const isExit = [MovementType.Exit, MovementType.AdjustExit].includes(movement.type);
 
       for (const detail of movement.details) {
         if (isExit) {
