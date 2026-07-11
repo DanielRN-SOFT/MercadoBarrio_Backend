@@ -2,7 +2,7 @@
  * Documentación Swagger del módulo de productos.
  *
  * Este archivo no exporta nada ejecutable: solo contiene los bloques
- * @swagger que swagger-jsdoc escanea para generar el spec. Debe estar
+ *  que swagger-jsdoc escanea para generar el spec. Debe estar
  * incluido en el array `apis` de la configuración de swagger-jsdoc,
  * junto a productos.routes.js.
  *

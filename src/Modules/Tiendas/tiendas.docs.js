@@ -2,7 +2,7 @@
  * Documentación Swagger del módulo de tiendas.
  *
  * Este archivo no exporta nada ejecutable: solo contiene los bloques
- * @swagger que swagger-jsdoc escanea para generar el spec. Debe estar
+ * que swagger-jsdoc escanea para generar el spec. Debe estar
  * incluido en el array `apis` de la configuración de swagger-jsdoc,
  * junto a tiendas.routes.js.
  *

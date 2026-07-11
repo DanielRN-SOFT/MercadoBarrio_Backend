@@ -2,7 +2,7 @@
  * Documentación Swagger del módulo de autenticación.
  *
  * Este archivo no exporta nada ejecutable: solo contiene los bloques
- * @swagger que swagger-jsdoc escanea para generar el spec. Debe estar
+ * que swagger-jsdoc escanea para generar el spec. Debe estar
  * incluido en el array `apis` de la configuración de swagger-jsdoc,
  * junto a auth.routes.js (o en vez de él).
  *
