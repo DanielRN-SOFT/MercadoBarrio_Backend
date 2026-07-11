@@ -112,6 +112,90 @@
  *           items:
  *             $ref: '#/components/schemas/SaleDetail'
  *
+ *     SaleDetailedProductInfo:
+ *       type: object
+ *       description: Datos del producto embebidos en cada línea del detalle, pensados para el export "fila por producto" (RF-47).
+ *       properties:
+ *         name:
+ *           type: string
+ *           example: Arroz Diana 500g
+ *         referenceCode:
+ *           type: string
+ *           nullable: true
+ *           example: REF-00123
+ *         productCategory:
+ *           type: object
+ *           properties:
+ *             name:
+ *               type: string
+ *               example: Granos
+ *         unitOfMeasure:
+ *           type: object
+ *           properties:
+ *             name:
+ *               type: string
+ *               example: Unidad
+ *
+ *     SaleDetailedLine:
+ *       type: object
+ *       properties:
+ *         productId:
+ *           type: integer
+ *           example: 12
+ *         quantity:
+ *           type: number
+ *           example: 3
+ *         unitPrice:
+ *           type: number
+ *           example: 2500
+ *         subtotal:
+ *           type: number
+ *           example: 7500
+ *         product:
+ *           $ref: '#/components/schemas/SaleDetailedProductInfo'
+ *
+ *     SaleDetailedItem:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *           example: 120
+ *         date:
+ *           type: string
+ *           format: date-time
+ *         total:
+ *           type: number
+ *           example: 45900
+ *         status:
+ *           $ref: '#/components/schemas/SaleStatus'
+ *         userId:
+ *           type: integer
+ *           example: 2
+ *         details:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/SaleDetailedLine'
+ *
+ *     SaleDetailedListResponse:
+ *       type: object
+ *       properties:
+ *         data:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/SaleDetailedItem'
+ *         meta:
+ *           type: object
+ *           properties:
+ *             total:
+ *               type: integer
+ *               example: 610
+ *             page:
+ *               type: integer
+ *               example: 1
+ *             totalPages:
+ *               type: integer
+ *               example: 61
+ *
  *     SaleListResponse:
  *       type: object
  *       properties:
@@ -343,6 +427,96 @@
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/SaleListResponse'
+ *       401:
+ *         description: No autorizado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SaleError'
+ *       403:
+ *         description: El usuario no tiene rol de tendero
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SaleError'
+ *       500:
+ *         description: Error interno del servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SaleError'
+ */
+
+/**
+ * @swagger
+ * /sales/detailed:
+ *   get:
+ *     summary: Obtiene ventas con el detalle de productos, para exportar una fila por producto (RF-47)
+ *     description: >
+ *       Acepta los mismos filtros que GET /sales (fecha, total, producto,
+ *       estado), pero cada venta trae su arreglo `details` con el producto,
+ *       categoría, referencia y unidad de cada línea vendida. Pensado para
+ *       que el frontend aplane el resultado a una fila por producto al
+ *       exportar a Excel. No reemplaza GET /sales: esa ruta sigue
+ *       usándose para la exportación resumen (una fila por venta).
+ *       Requiere rol de tendero.
+ *     tags: [Sales]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Número de página (ignorado si `all=true`)
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Fecha inicial del rango (inclusive)
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Fecha final del rango (inclusive, hasta las 23:59:59.999)
+ *       - in: query
+ *         name: minTotal
+ *         schema:
+ *           type: number
+ *         description: Total mínimo de la venta
+ *       - in: query
+ *         name: maxTotal
+ *         schema:
+ *           type: number
+ *         description: Total máximo de la venta
+ *       - in: query
+ *         name: productId
+ *         schema:
+ *           type: integer
+ *         description: Filtra ventas que incluyan este producto en el detalle
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           $ref: '#/components/schemas/SaleStatus'
+ *         description: Filtro por estado de la venta
+ *       - in: query
+ *         name: all
+ *         schema:
+ *           type: string
+ *           enum: ["true", "false"]
+ *         description: >
+ *           Si es "true", retorna hasta 20000 registros sin paginar
+ *           (para exportaciones), ignorando `page`
+ *     responses:
+ *       200:
+ *         description: Listado detallado de ventas obtenido correctamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SaleDetailedListResponse'
  *       401:
  *         description: No autorizado
  *         content:

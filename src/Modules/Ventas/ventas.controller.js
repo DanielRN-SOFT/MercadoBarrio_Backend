@@ -72,6 +72,94 @@ export const getSales = async (req, res, next) => {
   }
 };
 
+// RF-47: mismos filtros que getSales, pero trae el detalle de productos de
+// cada venta (categoría, referencia, unidad) para poder exportar una fila
+// por producto vendido. Es un endpoint aparte para no alterar el contrato
+// de /sales que ya usa la exportación "resumen por venta" (exportSalesToExcel).
+export const getSalesDetailed = async (req, res, next) => {
+  try {
+    const page = req.query.page || 1;
+    const limit = parseInt(process.env.PAGINATION_LIMIT) || 10;
+    const skip = (page - 1) * limit;
+
+    const { startDate, endDate, minTotal, maxTotal, productId, status, all } = req.query;
+
+    const exportAll = all === "true";
+
+    const where = { storeId: req.store.id };
+
+    if (startDate || endDate) {
+      where.date = {};
+      if (startDate) where.date.gte = new Date(startDate);
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        where.date.lte = end;
+      }
+    }
+
+    if (minTotal || maxTotal) {
+      where.total = {};
+      if (minTotal) where.total.gte = parseFloat(minTotal);
+      if (maxTotal) where.total.lte = parseFloat(maxTotal);
+    }
+
+    if (productId) {
+      where.details = { some: { productId: parseInt(productId) } };
+    }
+
+    if (status) {
+      where.status = status;
+    }
+
+    // Límite de seguridad para exportaciones masivas, evita traer millones de filas por error
+    const EXPORT_HARD_LIMIT = 20000;
+
+    const [total, sales] = await Promise.all([
+      prisma.sale.count({ where }),
+      prisma.sale.findMany({
+        ...(exportAll ? { take: EXPORT_HARD_LIMIT } : { skip, take: limit }),
+        where,
+        orderBy: { date: "desc" },
+        select: {
+          id: true,
+          date: true,
+          total: true,
+          status: true,
+          userId: true,
+          details: {
+            select: {
+              productId: true,
+              quantity: true,
+              unitPrice: true,
+              subtotal: true,
+              product: {
+                select: {
+                  name: true,
+                  referenceCode: true,
+                  productCategory: { select: { name: true } },
+                  unitOfMeasure: { select: { name: true } },
+                },
+              },
+            },
+          },
+        },
+      }),
+    ]);
+
+    res.json({
+      data: sales,
+      meta: {
+        total,
+        page,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getSaleById = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id);
