@@ -1,0 +1,2365 @@
+{
+  "info": {
+    "_postman_id": "91e704a2-944b-4f8c-918b-6a939ff37345",
+    "name": "MercadoBarrio",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "49310589",
+    "_collection_link": "https://go.postman.co/collection/49310589-91e704a2-944b-4f8c-918b-6a939ff37345?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login de usuario",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n   \r\n    \"email\" : \"grocer@gmail.com\",\r\n    \"password\": \"12345\"\r\n \r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/auth/login",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Registar un usuario",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"Felipe\",\r\n    \"email\" : \"daniel20ramirez062@gmail.com\",\r\n    \"password\": \"12345\",\r\n    \"phone\" : \"999999999\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/auth/register",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "LogOut",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "email",
+                  "value": "daniel@gmail.com",
+                  "type": "text",
+                  "uuid": "a18b54e7-a1fc-4167-8faa-e001f224b451"
+                },
+                {
+                  "key": "password",
+                  "value": "12345",
+                  "type": "text",
+                  "uuid": "207cb776-0bc7-42f5-a288-c9019906a943"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/auth/logout",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetProfile",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n   \r\n    \"email\" : \"grocer@gmail.com\",\r\n    \"password\": \"12345\"\r\n \r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/auth/profile",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "auth",
+                "profile"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Olvide mi contraseña",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"email\": \"daniel20ramirez06@gmail.com\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/auth/forgot-password",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "auth",
+                "forgot-password"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Recuperar password",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"password\": \"54321\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/auth/forgot-password/1js2vhbvtpauk5aipots",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "auth",
+                "forgot-password",
+                "1js2vhbvtpauk5aipots"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Comprobar Token",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"email\": \"daniel20ramirez06@gmail.com\"\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/auth/comprobar-token/1js31ckp5f2d0d13ksuo",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "auth",
+                "comprobar-token",
+                "1js31ckp5f2d0d13ksuo"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "UpdateUsers",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"Daniel Ramirez\",\r\n    \"email\" : \"daniel@gmail.com\",\r\n    \"phone\" : \"777\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/users/112",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "users",
+                "112"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetUsers",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"nombre\": \"Daniel\",\r\n    \"email\" : \"daniel@gmail.com\",\r\n    \"password\": \"12345\",\r\n    \"telefono\" : \"999999999\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/users",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "users"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetUserById",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"Felipe\",\r\n    \"email\" : \"felipe@gmail.com\",\r\n    \"phone\" : \"7777\"\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/users/daad",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "users",
+                "daad"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DeleteUser",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"Felipe\",\r\n    \"email\" : \"felipe@gmail.com\",\r\n    \"phone\" : \"7777\"\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/users/delete/1",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "users",
+                "delete",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "RestoreUser",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"Felipe\",\r\n    \"email\" : \"felipe@gmail.com\",\r\n    \"phone\" : \"7777\"\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/users/restore/1",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "users",
+                "restore",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Roles",
+      "item": [
+        {
+          "name": "CreateRol",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name12\": \"empleado\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/roles",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "roles"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetRoles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{MERCADO_URL}}/roles",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "roles"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetRolesById",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"nombre\": \"Daniel\",\r\n    \"email\" : \"daniel@gmail.com\",\r\n    \"password\": \"12345\",\r\n    \"telefono\" : \"999999999\"\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/roles/12",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "roles",
+                "12"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "UpdateRole",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"Employee\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/roles/dad",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "roles",
+                "dad"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DeleteRole",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"Employee\"\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/roles/",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "roles",
+                ""
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "ProductCategories",
+      "item": [
+        {
+          "name": "GetProductCategories",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"nombre\": \"Daniel\",\r\n    \"email\" : \"daniel@gmail.com\",\r\n    \"password\": \"12345\",\r\n    \"telefono\" : \"999999999\"\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/product-categories",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "product-categories"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PostProductCategories",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name2\" : \"Comida\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/product-categories",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "product-categories"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetProductCategoryById",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\" : \"Comida\"\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/product-categories/2",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "product-categories",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "UpdateProductCategory",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\" : \"otra categoria\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/product-categories/e2",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "product-categories",
+                "e2"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DeleteProductCategory",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\" : \"Otra categoria\"\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/product-categories/delete/2",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "product-categories",
+                "delete",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "RestoreProductCategory",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\" : \"Otra categoria\"\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/product-categories/restore/2",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "product-categories",
+                "restore",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "UnifOfMeasures",
+      "item": [
+        {
+          "name": "GetUnitOfMeasure",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"nombre\": \"Daniel\",\r\n    \"email\" : \"daniel@gmail.com\",\r\n    \"password\": \"12345\",\r\n    \"telefono\" : \"999999999\"\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/unit-measures",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "unit-measures"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CreateUnitOfMeasures",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"Litros\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/unit-measures",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "unit-measures"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "UpdateUnifOfMeasures",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"Metros\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/unit-measures/2",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "unit-measures",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DeleteUnitOfMeasures",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"Litros\"\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/unit-measures/delete/2",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "unit-measures",
+                "delete",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "RestoreUnitOfMeasure",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"Litros\"\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/unit-measures/restore/2",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "unit-measures",
+                "restore",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetUnitOfMeasureById",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"Litros\"\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/unit-measures/1",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "unit-measures",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "StoreCategories",
+      "item": [
+        {
+          "name": "GetStoreCategories",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"Litros\"\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/store-categories",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "store-categories"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CreateStoreCategories",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"Tienda\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/store-categories",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "store-categories"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "UpdateStoreCategory",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"yes\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/store-categories/2112",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "store-categories",
+                "2112"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetStoreCategoryById",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"namew\": \"yes\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/store-categories/2",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "store-categories",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DeleteStoreCategory",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"namew\": \"yes\"\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/store-categories/delete/2",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "store-categories",
+                "delete",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "RestoreStoreCategory",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"namew\": \"yes\"\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/store-categories/restore/2",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "store-categories",
+                "restore",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Movements",
+      "item": [
+        {
+          "name": "GetMovements",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"nombre\": \"Daniel\",\r\n    \"email\" : \"daniel@gmail.com\",\r\n    \"password\": \"12345\",\r\n    \"telefono\" : \"999999999\"\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/movements/",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "movements",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetMovementById",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"nombre\": \"Daniel\",\r\n    \"email\" : \"daniel@gmail.com\",\r\n    \"password\": \"12345\",\r\n    \"telefono\" : \"999999999\"\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/movements/1",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "movements",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CreateMovement",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"type\": \"Exit\",\r\n    \"reason\": \"Yes\",\r\n    \"products\": [\r\n        {\r\n            \"productId\": 8,\r\n            \"quantity\": 2,\r\n            \"unitCost\": 2000\r\n        },\r\n        {\r\n            \"productId\": 9,\r\n            \"quantity\": 18,\r\n            \"unitCost\": 7000\r\n        }\r\n\r\n    ]\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/movements",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "movements"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DeleteMovement",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"type\": \"Exit\",\r\n    \"reason\": \"Yes\",\r\n    \"products\": [\r\n        {\r\n            \"productId\": 8,\r\n            \"quantity\": 2,\r\n            \"unitCost\": 2000\r\n        },\r\n        {\r\n            \"productId\": 9,\r\n            \"quantity\": 18,\r\n            \"unitCost\": 7000\r\n        }\r\n\r\n    ]\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/movements/delete/8",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "movements",
+                "delete",
+                "8"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "AttendanceSchedule",
+      "item": [
+        {
+          "name": "GetAttendanceSchedule",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"type\": \"Exit\",\r\n    \"reason\": \"Yes\",\r\n    \"products\": [\r\n        {\r\n            \"productId\": 8,\r\n            \"quantity\": 2,\r\n            \"unitCost\": 2000\r\n        },\r\n        {\r\n            \"productId\": 9,\r\n            \"quantity\": 18,\r\n            \"unitCost\": 7000\r\n        }\r\n\r\n    ]\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/attendance-schedules",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "attendance-schedules"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetAttendanceScheduleById",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"type\": \"Exit\",\r\n    \"reason\": \"Yes\",\r\n    \"products\": [\r\n        {\r\n            \"productId\": 8,\r\n            \"quantity\": 2,\r\n            \"unitCost\": 2000\r\n        },\r\n        {\r\n            \"productId\": 9,\r\n            \"quantity\": 18,\r\n            \"unitCost\": 7000\r\n        }\r\n\r\n    ]\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/attendance-schedules/7",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "attendance-schedules",
+                "7"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "UpdateAttendanceSchedule",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"weekDay\": \"Tuesday\",\r\n  \"startTime\": \"1970-01-01T09:00:00.000Z\",\r\n  \"endTime\": \"1970-01-01T12:00:00.000Z\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/attendance-schedules/7",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "attendance-schedules",
+                "7"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PostAttendanceSchedule",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"weekDay\": \"Monday\",\r\n  \"startTime\": \"1970-01-01T08:00:00.000Z\",\r\n  \"endTime\": \"1970-01-01T12:00:00.000Z\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/attendance-schedules",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "attendance-schedules"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DeleteAttendanceSchedule",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"weekDay\": \"Monday\",\r\n  \"startTime\": \"1970-01-01T08:00:00.000Z\",\r\n  \"endTime\": \"1970-01-01T12:00:00.000Z\"\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/attendance-schedules/delete/7",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "attendance-schedules",
+                "delete",
+                "7"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "RestoreAttendanceSchedule",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"weekDay\": \"Monday\",\r\n  \"startTime\": \"1970-01-01T08:00:00.000Z\",\r\n  \"endTime\": \"1970-01-01T12:00:00.000Z\"\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/attendance-schedules/restore/7",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "attendance-schedules",
+                "restore",
+                "7"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "GetDashboardAdmin",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{MERCADO_URL}}/dashboard/admin",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "dashboard",
+                "admin"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetDashboardAdminCharts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{MERCADO_URL}}/dashboard/admin/charts",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "dashboard",
+                "admin",
+                "charts"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetDashboardStore",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{MERCADO_URL}}/dashboard/store",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "dashboard",
+                "store"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetDashboardStoreCharts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{MERCADO_URL}}/dashboard/store/charts",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "dashboard",
+                "store",
+                "charts"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Suppliers",
+      "item": [
+        {
+          "name": "GetSuppliers",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"email\": \"daniel20ramirez06@gmail.com\"\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/suppliers",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "suppliers"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PostSuppliers",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"un distribuidor\",\r\n    \"email\": \"distribuidor@gmail.com\",\r\n    \"address\": \"transversal 7 #20-62\",\r\n    \"city\": \"Cartago\", \r\n    \"phone\": \"123456789\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/suppliers",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "suppliers"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetSupplierById",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"un distribuidor\",\r\n    \"email\": \"distribuidor@gmail.com\",\r\n    \"address\": \"transversal 7 #20-62\",\r\n    \"city\": \"Cartago\", \r\n    \"phone\": \"123456789\"\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/suppliers/3",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "suppliers",
+                "3"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "UpdateSupplier",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"un distribuidor\",\r\n    \"email\": \"distribuidor2@gmail.com\",\r\n    \"address\": \"transversal 7 #20-62\",\r\n    \"city\": \"Cartago\", \r\n    \"phone\": \"123456789\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/suppliers/3",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "suppliers",
+                "3"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DeleteSupplier",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"un distribuidor\",\r\n    \"email\": \"distribuidor@gmail.com\",\r\n    \"address\": \"transversal 7 #20-62\",\r\n    \"city\": \"Cartago\", \r\n    \"phone\": \"123456789\"\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/suppliers/delete/3",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "suppliers",
+                "delete",
+                "3"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "RestoreSupplier",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"un distribuidor\",\r\n    \"email\": \"distribuidor@gmail.com\",\r\n    \"address\": \"transversal 7 #20-62\",\r\n    \"city\": \"Cartago\", \r\n    \"phone\": \"123456789\"\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/suppliers/restore/3",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "suppliers",
+                "restore",
+                "3"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Stores",
+      "item": [
+        {
+          "name": "GetStoresPublicMap",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"type\": \"Exit\",\r\n    \"reason\": \"Yes\",\r\n    \"products\": [\r\n        {\r\n            \"productId\": 8,\r\n            \"quantity\": 2,\r\n            \"unitCost\": 2000\r\n        },\r\n        {\r\n            \"productId\": 9,\r\n            \"quantity\": 18,\r\n            \"unitCost\": 7000\r\n        }\r\n\r\n    ]\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/stores/public",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "stores",
+                "public"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetStoresPublicMap",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"type\": \"Exit\",\r\n    \"reason\": \"Yes\",\r\n    \"products\": [\r\n        {\r\n            \"productId\": 8,\r\n            \"quantity\": 2,\r\n            \"unitCost\": 2000\r\n        },\r\n        {\r\n            \"productId\": 9,\r\n            \"quantity\": 18,\r\n            \"unitCost\": 7000\r\n        }\r\n\r\n    ]\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/stores/public/map",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "stores",
+                "public",
+                "map"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetStoresById",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{MERCADO_URL}}/stores/public/16",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "stores",
+                "public",
+                "16"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetStoresByGrocer",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"type\": \"Exit\",\r\n    \"reason\": \"Yes\",\r\n    \"products\": [\r\n        {\r\n            \"productId\": 8,\r\n            \"quantity\": 2,\r\n            \"unitCost\": 2000\r\n        },\r\n        {\r\n            \"productId\": 9,\r\n            \"quantity\": 18,\r\n            \"unitCost\": 7000\r\n        }\r\n\r\n    ]\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/stores/me",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "stores",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CreateMyStore",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"Nueva tienda\",\r\n    \"address\" : \"si\",\r\n    \"neighborhood\": \"un barrio\",\r\n    \"longitude\": 12,\r\n    \"latitude\": 10,\r\n    \"description\": \"no\",\r\n    \"phone\": \"123456789\",\r\n    \"storeCategoryId\": 2\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/stores/me",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "stores",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "UpdateMyStore",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"Otra tienda\",\r\n    \"address\" : \"actualizado\",\r\n    \"neighborhood\": \"un barrio\",\r\n    \"longitude\": 12,\r\n    \"latitude\": 10,\r\n    \"description\": \"no\",\r\n    \"phone\": \"123456789\",\r\n    \"storeCategoryId\": 2\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/stores/me",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "stores",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ChangeVisibility",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"isVisible\": true\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/stores/me/visibility",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "stores",
+                "me",
+                "visibility"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetStoresAdmin",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"isVisible\": true\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/stores",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "stores"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DeleteStore",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"isVisible\": true\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/stores/delete/8",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "stores",
+                "delete",
+                "8"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "RestoreStore",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"isVisible\": true\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/stores/restore/8",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "stores",
+                "restore",
+                "8"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetStoresAdminById",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"isVisible\": true\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/stores/2",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "stores",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CreateStoresAdmin",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"yerornot\",\r\n    \"address\" : \"si\",\r\n    \"neighborhood\": \"un barrio\",\r\n    \"longitude\": 12,\r\n    \"latitude\": 10,\r\n    \"description\": \"no\",\r\n    \"phone\": \"123456789\",\r\n    \"userId\": 5,\r\n    \"storeCategoryId\": 2\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/stores",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "stores"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "UpdateStoresAdmin",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"si o no\",\r\n    \"address\" : \"si\",\r\n    \"neighborhood\": \"un barrio\",\r\n    \"longitude\": 12,\r\n    \"latitude\": 10,\r\n    \"description\": \"no\",\r\n    \"phone\": \"123456789\",\r\n    \"userId\": 5,\r\n    \"storeCategoryId\": 2\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/stores/17",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "stores",
+                "17"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "GetProductsPublic",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"isVisible\": true\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/products/public/search",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "products",
+                "public",
+                "search"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetProductsGrocer",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"isVisible\": true\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/products",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "products"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetProductsGrocerById",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"isVisible\": true\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/products/134",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "products",
+                "134"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetMovementReport",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"isVisible\": true\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/products/31/timeline",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "products",
+                "31",
+                "timeline"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DeleteProducts",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"isVisible\": true\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/products/delete/31",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "products",
+                "delete",
+                "31"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "RestoreProducts",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"isVisible\": true\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/products/restore/31",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "products",
+                "restore",
+                "31"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetProductsInventoryGrocer",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"isVisible\": true\r\n}"
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/products/inventory",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "products",
+                "inventory"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "UpdateAlertStockForCategory",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"productCategoryId\": 5,\r\n    \"lowStockThreshold\": 3\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/products/threshold/by-category",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "products",
+                "threshold",
+                "by-category"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CreateProduct",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"panela\",\r\n    \"price\": 8000,\r\n    \"description\": \"yes\",\r\n    \"referenceCode\": \"12012\",\r\n    \"lowStockThreshold\": 5,\r\n    \"currentStock\": 10,\r\n    \"productCategoryId\": 7,\r\n    \"unitOfMeasureId\": 2\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/products",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "products"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "UpdateProduct",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"balon de futbol\",\r\n    \"price\": 2500,\r\n    \"description\": \"yes\",\r\n    \"referenceCode\": \"12012\",\r\n    \"lowStockThreshold\": 5,\r\n    \"currentStock\": 10,\r\n    \"productCategoryId\": 7,\r\n    \"unitOfMeasureId\": 2\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/products/134",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "products",
+                "134"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "SaleDetails",
+      "item": [
+        {
+          "name": "GetSaleDetails",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{MERCADO_URL}}/sale-details",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "sale-details"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetSaleDetailById",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{MERCADO_URL}}/sale-details/5871",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "sale-details",
+                "5871"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Sales",
+      "item": [
+        {
+          "name": "GetSales",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{MERCADO_URL}}/sales",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "sales"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetSalesById",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{MERCADO_URL}}/sales/2354",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "sales",
+                "2354"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetSalesDetailed",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{MERCADO_URL}}/sales/detailed",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "sales",
+                "detailed"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetSalesReport",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{MERCADO_URL}}/sales/report",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "sales",
+                "report"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CreateSale",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"date\": \"2026-07-11T15:30:00.000Z\",\r\n  \"details\": [\r\n    {\r\n      \"productId\": 56,\r\n      \"quantity\": 3\r\n    },\r\n    {\r\n      \"productId\": 31,\r\n      \"quantity\": 2\r\n    }\r\n  ]\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/sales",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "sales"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CancelSale",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"cancellationReason\": \"mal digitación\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{MERCADO_URL}}/sales/cancel/2355",
+              "host": [
+                "{{MERCADO_URL}}"
+              ],
+              "path": [
+                "sales",
+                "cancel",
+                "2355"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
